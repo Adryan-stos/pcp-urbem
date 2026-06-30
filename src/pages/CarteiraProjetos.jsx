@@ -135,24 +135,24 @@ export default function CarteiraProjetos() {
         .select(`
             *,
             projetos!inner (
-            id,
-            codigo_interno,
-            nome_projeto,
-            cliente,
-            data_entrega,
-            fase_projeto,
-            ativo,
-            created_at
+                id,
+                codigo_interno,
+                nome_projeto,
+                cliente,
+                data_entrega,
+                fase_projeto,
+                ativo,
+                created_at
             ),
             carregamentos_projeto (
-            id,
-            numero_carregamento,
-            data_prevista
+                id,
+                numero_carregamento,
+                data_prevista
             ),
             ordens_producao (
-            id,
-            numero_op,
-            status
+                id,
+                numero_op,
+                status
             )
         `)
         .eq('ativo', true)
@@ -185,70 +185,72 @@ export default function CarteiraProjetos() {
         return rotas.length ? rotas.join(' → ') : 'Não definida'
     }
 
-    function gerarNumeroOP() {
+    function gerarNumeroOPBase() {
         const agora = new Date()
 
-        const ano = agora.getFullYear()
+        const ano = String(agora.getFullYear()).slice(2)
         const mes = String(agora.getMonth() + 1).padStart(2, '0')
         const dia = String(agora.getDate()).padStart(2, '0')
         const hora = String(agora.getHours()).padStart(2, '0')
         const minuto = String(agora.getMinutes()).padStart(2, '0')
         const segundo = String(agora.getSeconds()).padStart(2, '0')
 
-        return `OP-${ano}${mes}${dia}-${hora}${minuto}${segundo}`
+        return `${ano}${mes}${dia}${hora}${minuto}${segundo}`
         }
 
 
-    function montarProcessosOP(item, ordemProducaoId) {
+    function montarProcessosOP(item, ordemProducaoId, numeroOPBase) {
         const processos = []
 
         const material = String(item.tipo_material || '').toUpperCase()
         const isCLT = material.includes('CLT')
         const isMLC = material.includes('MLC')
 
-        function adicionarProcesso(sequencia, processo, recurso = null) {
+        function adicionarProcesso(sequencia, processo, recurso = null, tipoItemProcesso = 'FILHO') {
             const primeiroProcesso = processos.length === 0
 
             processos.push({
-                ordem_producao_id: ordemProducaoId,
-                sequencia,
-                processo,
-                recurso,
-                status: primeiroProcesso ? 'Liberado para programação' : 'Pendente',
-                liberado_programacao: primeiroProcesso,
-                prioridade: null,
-                origem: 'Sugestão do sistema'
+            ordem_producao_id: ordemProducaoId,
+            sequencia,
+            numero_talao: `${numeroOPBase}-${sequencia}`,
+            processo,
+            recurso,
+            tipo_item_processo: tipoItemProcesso,
+            status: primeiroProcesso ? 'Liberado para programação' : 'Pendente',
+            liberado_programacao: primeiroProcesso,
+            prioridade: null,
+            origem: 'Sugestão do sistema'
             })
         }
 
         if (isMLC) {
-            adicionarProcesso(10, 'OTIMIZADORA/FINGER', 'OTIMIZADORA/FINGER')
-            adicionarProcesso(20, 'PLAINA', 'A DEFINIR')
-            adicionarProcesso(30, 'PRENSA', 'A DEFINIR')
+            adicionarProcesso(10, 'OTIMIZADORA/FINGER', 'OTIMIZADORA/FINGER', 'MASTER')
+            adicionarProcesso(20, 'PLAINA', 'A DEFINIR', 'MASTER')
+            adicionarProcesso(30, 'PRENSA', 'A DEFINIR', 'MASTER')
 
             if (item.pcp_destopadeira) {
-            adicionarProcesso(40, 'DESTOPADEIRA', 'DESTOPADEIRA')
+            adicionarProcesso(40, 'DESTOPADEIRA', 'DESTOPADEIRA', 'FILHO')
             }
 
             if (item.pcp_cnc) {
-            adicionarProcesso(50, 'CNC', 'CNC')
+            adicionarProcesso(50, 'CNC', 'CNC', 'FILHO')
             }
 
             if (item.pcp_acabamento) {
-            adicionarProcesso(60, 'ACABAMENTO', 'ACABAMENTO')
+            adicionarProcesso(60, 'ACABAMENTO', 'ACABAMENTO', 'FILHO')
             }
         }
 
         if (isCLT) {
-            adicionarProcesso(10, 'OTIMIZADORA/FINGER', 'OTIMIZADORA/FINGER')
-            adicionarProcesso(20, 'PLAINA', 'A DEFINIR')
-            adicionarProcesso(30, 'PRENSA', 'MINDA')
-            adicionarProcesso(40, 'CNC', 'CNC')
-            adicionarProcesso(50, 'ACABAMENTO', 'ACABAMENTO')
+            adicionarProcesso(10, 'OTIMIZADORA/FINGER', 'OTIMIZADORA/FINGER', 'MASTER')
+            adicionarProcesso(20, 'PLAINA', 'A DEFINIR', 'MASTER')
+            adicionarProcesso(30, 'PRENSA', 'MINDA', 'MASTER')
+            adicionarProcesso(40, 'CNC', 'CNC', 'FILHO')
+            adicionarProcesso(50, 'ACABAMENTO', 'ACABAMENTO', 'FILHO')
         }
 
         return processos
-        }
+    }
 
 
     async function criarOP(item) {

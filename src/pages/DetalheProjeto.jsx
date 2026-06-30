@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, ChevronDown, ChevronRight, Pencil} from 'lucide-react'
+import { Plus, ChevronDown, ChevronRight, Pencil, Eye} from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 
@@ -766,7 +766,7 @@ function contarItensDoCarregamento(carregamentoId) {
                     setNovoCarregamentoItem(itemSelecionado.carregamento_id || '')
                   }}
                 >
-                  <Pencil size={14} />
+                  <Eye size={14} />
                   Alterar
                 </button>
               </div>
