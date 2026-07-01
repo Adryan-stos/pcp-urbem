@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { RefreshCw, Eye, Pencil } from 'lucide-react'
+import { RefreshCw, Eye, Pencil, Factory, Package, Ticket} from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 
@@ -12,6 +12,8 @@ export default function CarteiraProjetos() {
   const [opSelecionada, setOpSelecionada] = useState(null)
   const [processosOP, setProcessosOP] = useState([])
   const [modalOPAberta, setModalOPAberta] = useState(false)
+  const [masterSelecionada, setMasterSelecionada] = useState(null)
+  const [abaMaster, setAbaMaster] = useState('resumo')
 
 
   const itensFiltrados = itens
@@ -346,46 +348,59 @@ export default function CarteiraProjetos() {
         }
         }
 
-    async function visualizarOP(op) {
-        try {
-            const { data, error } = await supabase
-            .from('op_processos')
-            .select('*')
-            .eq('ordem_producao_id', op.id)
-            .order('sequencia')
+        async function visualizarOP(op, master = null) {
+            try {
+                const { data, error } = await supabase
+                .from('op_processos')
+                .select('*')
+                .eq('ordem_producao_id', op.id)
+                .order('sequencia')
 
-            if (error) throw error
+                if (error) throw error
 
-            setOpSelecionada(op)
-            setProcessosOP(data || [])
-            setModalOPAberta(true)
-
-        } catch (error) {
-            alert(error.message)
-        }
+                setOpSelecionada(op)
+                setMasterSelecionada(master)
+                setProcessosOP(data || [])
+                setAbaMaster('resumo')
+                setModalOPAberta(true)
+            } catch (error) {
+                alert(error.message)
+            }
         }
 
         function classeProcessoStatus(status) {
-        switch (status) {
-            case 'Finalizado':
-            return 'finalizado'
+            switch (status) {
+                case 'Finalizado':
+                case 'Concluído':
+                return 'finalizado'
 
-            case 'Programado':
-            return 'programado'
+                case 'Liberado para programação':
+                return 'liberado'
 
-            case 'Em produção':
-            return 'producao'
+                case 'Programado':
+                return 'programado'
 
-            case 'Atrasado':
-            return 'atrasado'
+                case 'Em produção':
+                return 'producao'
 
-            case 'Bloqueado':
-            return 'bloqueado'
+                case 'Atrasado':
+                return 'atrasado'
 
-            default:
-            return 'pendente'
+                case 'Bloqueado':
+                return 'bloqueado'
+
+                default:
+                return 'pendente'
+            }
         }
-        }
+
+        const filhosMasterSelecionada = masterSelecionada?.itens_filhos || []
+
+        const volumeMasterSelecionada = Number(masterSelecionada?.volume_m3 || 0)
+
+        const volumeFilhosSelecionada = filhosMasterSelecionada.reduce((total, filho) => total + Number(filho.volume_m3 || 0), 0)
+
+        const aproveitamentoSelecionada = volumeMasterSelecionada > 0 ? (volumeFilhosSelecionada / volumeMasterSelecionada) * 100: 0
 
   return (
     <div className="page">
@@ -501,99 +516,68 @@ export default function CarteiraProjetos() {
         <div className="table-wrapper">
           <table>
             <thead>
-              <tr>
-                <th>
-                <button
-                    type="button"
-                    className="sort-header"
-                    onClick={() => alternarOrdenacao('projeto')}
-                >
-                    Projeto {renderSortIcon('projeto')}
-                </button>
-                </th>
-                <th>
-                <button
-                    type="button"
-                    className="sort-header"
-                    onClick={() => alternarOrdenacao('carregamento')}
-                >
-                    Carregamento {renderSortIcon('carregamento')}
-                </button>
-                </th>
-                <th>
-                <button
-                    type="button"
-                    className="sort-header"
-                    onClick={() => alternarOrdenacao('item')}
-                >
-                    Item {renderSortIcon('item')}
-                </button>
-                </th>
-                <th>
-                <button
-                    type="button"
-                    className="sort-header"
-                    onClick={() => alternarOrdenacao('material')}
-                >
-                    Material {renderSortIcon('material')}
-                </button>
-                </th>
-                <th>
-                <button
-                    type="button"
-                    className="sort-header"
-                    onClick={() => alternarOrdenacao('dimensao')}
-                >
-                    Dimensão {renderSortIcon('dimensao')}
-                </button>
-                </th>
-                <th>
-                <button
-                    type="button"
-                    className="sort-header"
-                    onClick={() => alternarOrdenacao('volume')}
-                >
-                    M³ {renderSortIcon('volume')}
-                </button>
-                </th>
-                <th>
-                <button
-                    type="button"
-                    className="sort-header"
-                    onClick={() => alternarOrdenacao('rota_pcp')}
-                >
-                    Rota PCP {renderSortIcon('rota_pcp')}
-                </button>
-                </th>
-                <th>
-                <button
-                    type="button"
-                    className="sort-header"
-                    onClick={() => alternarOrdenacao('status_op')}
-                >
-                    Ordem de Produção {renderSortIcon('status_op')}
-                </button>
-                </th>
+                <tr>
                     <th>
-                <button
-                    type="button"
-                    className="sort-header"
-                    onClick={() => alternarOrdenacao('status_op')}
-                >
-                    Status {renderSortIcon('status_op')}
-                </button>
-                </th>
-                <th> </th>
-                <th>
                     <button
                         type="button"
                         className="sort-header"
-                        onClick={() => alternarOrdenacao('criacao')}
+                        onClick={() => alternarOrdenacao('projeto')}
                     >
-                        Criação {renderSortIcon('criacao')}
+                        Projeto {renderSortIcon('projeto')}
                     </button>
-                </th>
-                <th>
+                    </th>
+
+                    <th>
+                    <button
+                        type="button"
+                        className="sort-header"
+                        onClick={() => alternarOrdenacao('carregamento')}
+                    >
+                        Carregamento {renderSortIcon('carregamento')}
+                    </button>
+                    </th>
+
+                    <th>
+                    <button
+                        type="button"
+                        className="sort-header"
+                        onClick={() => alternarOrdenacao('master')}
+                    >
+                        Master {renderSortIcon('master')}
+                    </button>
+                    </th>
+
+                    <th>
+                    Filhos
+                    </th>
+
+                    <th>
+                    <button
+                        type="button"
+                        className="sort-header"
+                        onClick={() => alternarOrdenacao('volume')}
+                    >
+                        Volume Master {renderSortIcon('volume')}
+                    </button>
+                    </th>
+
+                    <th>
+                    Aproveitamento Previsto
+                    </th>
+
+                    <th>
+                    Ordem de Produção
+                    </th>
+
+                    <th>
+                    Status
+                    </th>
+
+                    <th>
+                    Ações
+                    </th>
+
+                    <th>
                     <button
                         type="button"
                         className="sort-header"
@@ -601,8 +585,8 @@ export default function CarteiraProjetos() {
                     >
                         Entrega {renderSortIcon('entrega')}
                     </button>
-                </th>
-              </tr>
+                    </th>
+                </tr>
             </thead>
 
             <tbody>
@@ -612,10 +596,14 @@ export default function CarteiraProjetos() {
 
                     const filhos = master.itens_filhos || []
 
+                    const volumeMaster = Number(master.volume_m3 || 0)
+
                     const volumeFilhos = filhos.reduce(
                     (total, filho) => total + Number(filho.volume_m3 || 0),
                     0
                     )
+
+                    const aproveitamento =volumeMaster > 0 ? (volumeFilhos / volumeMaster) * 100 : 0
 
                     return (
                     <tr key={master.id}>
@@ -645,9 +633,17 @@ export default function CarteiraProjetos() {
                         <small>itens filhos</small>
                         </td>
 
-                        <td>{Number(master.volume_m3 || 0).toFixed(2)}</td>
+                        <td>
+                        <strong>{volumeMaster.toFixed(2)}</strong>
+                        <br />
+                        <small>m³ Master</small>
+                        </td>
 
-                        <td>{volumeFilhos.toFixed(2)}</td>
+                        <td>
+                        <strong>{volumeFilhos.toFixed(2)}</strong>
+                        <br />
+                        <small>{aproveitamento.toFixed(1)}% aproveit.</small>
+                        </td>
 
                         <td>{op?.numero_op || '-'}</td>
 
@@ -667,7 +663,7 @@ export default function CarteiraProjetos() {
                             <button
                                 type="button"
                                 className="table-icon-action"
-                                onClick={() => visualizarOP(op)}
+                                onClick={() => visualizarOP(op, master)}
                                 title="Visualizar OP"
                             >
                                 <Eye size={16} />
@@ -705,61 +701,215 @@ export default function CarteiraProjetos() {
         </div>
       </section>
 
+
       {modalOPAberta && (
         <div className="modal-overlay">
-            <div className="modal-card op-modal">
-
+        <div className="modal-card op-modal master-360-modal">
             <div className="op-modal-header">
-                <div>
-                <span>Ordem de Produção</span>
-                <h3>{opSelecionada?.numero_op}</h3>
-                </div>
+            <div>
+                <span>Master 360</span>
+                <h3>{masterSelecionada?.codigo_interno_item || opSelecionada?.numero_op}</h3>
+            </div>
 
-                <button
+            <button
                 type="button"
                 className="btn ghost"
                 onClick={() => setModalOPAberta(false)}
-                >
+            >
                 Fechar
-                </button>
+            </button>
             </div>
 
-            <div className="op-flow">
-                {processosOP.map((processo, index) => (
-                    <div className="op-flow-step" key={processo.id}>
-                    <div className={`op-flow-dot ${classeProcessoStatus(processo.status)}`}>
-                        {processo.sequencia}
-                    </div>
+            <div className="master-360-tabs">
+            <button
+                type="button"
+                className={abaMaster === 'resumo' ? 'active' : ''}
+                onClick={() => setAbaMaster('resumo')}
+            >
+                Resumo
+            </button>
 
-                    <div className="op-flow-content">
-                        <strong>{processo.processo}</strong>
-                        <span>{processo.recurso || 'Não definido'}</span>
-                        <small>{processo.status}</small>
-                    </div>
+            <button
+                type="button"
+                className={abaMaster === 'fluxo' ? 'active' : ''}
+                onClick={() => setAbaMaster('fluxo')}
+            >
+                Fluxo da OP
+            </button>
 
-                    {index < processosOP.length - 1 && (
-                        <div className="op-flow-line" />
-                    )}
-                    </div>
-                ))}
+            <button
+                type="button"
+                className={abaMaster === 'filhos' ? 'active' : ''}
+                onClick={() => setAbaMaster('filhos')}
+            >
+                Filhos
+            </button>
+
+            <button
+                type="button"
+                className={abaMaster === 'apontamentos' ? 'active' : ''}
+                onClick={() => setAbaMaster('apontamentos')}
+            >
+                Apontamentos
+            </button>
+
+            <button
+                type="button"
+                className={abaMaster === 'historico' ? 'active' : ''}
+                onClick={() => setAbaMaster('historico')}
+            >
+                Histórico
+            </button>
+            </div>
+
+            {abaMaster === 'resumo' && (
+            <div className="master-360-content">
+                <section className="master-summary-grid">
+                <div>
+                    <span>Projeto</span>
+                    <strong>{masterSelecionada?.projetos?.codigo_interno || '-'}</strong>
                 </div>
 
-                <div className="op-process-list">
-                {processosOP.map((processo) => (
-                    <div key={processo.id} className="op-process-card">
+                <div>
+                    <span>Cliente</span>
+                    <strong>{masterSelecionada?.projetos?.cliente || '-'}</strong>
+                </div>
+
+                <div>
+                    <span>Carregamento</span>
+                    <strong>
+                    {masterSelecionada?.carregamentos_projeto
+                        ? `Carga ${masterSelecionada.carregamentos_projeto.numero_carregamento}`
+                        : '-'}
+                    </strong>
+                </div>
+
+                <div>
+                    <span>OP Base</span>
+                    <strong>{opSelecionada?.numero_op || '-'}</strong>
+                </div>
+
+                <div>
+                    <span>Volume Master</span>
+                    <strong>{volumeMasterSelecionada.toFixed(2)} m³</strong>
+                </div>
+
+                <div>
+                    <span>Volume Filhos</span>
+                    <strong>{volumeFilhosSelecionada.toFixed(2)} m³</strong>
+                </div>
+
+                <div>
+                    <span>Aproveitamento previsto</span>
+                    <strong>{aproveitamentoSelecionada.toFixed(1)}%</strong>
+                </div>
+
+                <div>
+                    <span>Filhos vinculados</span>
+                    <strong>{filhosMasterSelecionada.length}</strong>
+                </div>
+                </section>
+            </div>
+            )}
+
+            {abaMaster === 'fluxo' && (
+            <div className="master-360-content">
+                <div className="op-flow">
+                {processosOP.map((processo, index) => {
+                    const statusClasse = classeProcessoStatus(processo.status)
+
+                    const indiceAtual = processosOP.findIndex(
+                        (p) => !['Finalizado', 'Concluído'].includes(p.status)
+                    )
+
+                    const processoAtual = index === indiceAtual
+
+                    return (
+                        <div
+                        className={`op-flow-step ${statusClasse} ${processoAtual ? 'processo-atual' : ''}`}
+                        key={processo.id}
+                        >
+                        <div className={`op-flow-dot ${statusClasse}`}>
+                            {processo.sequencia}
+                        </div>
+
+                        <div className="op-flow-content">
+                            <strong>
+                            {processo.sequencia} - {processo.processo}
+                            </strong>
+
+                            <div className="processo-tags">
+                            <span className="tag-processo">
+                                <Factory size={13} />
+                                {processo.recurso || 'A definir'}
+                            </span>
+
+                            <span className="tag-processo">
+                                <Package size={13} />
+                                {processo.tipo_item_processo || '-'}
+                            </span>
+
+                            <span className="tag-processo">
+                                <Ticket size={13} />
+                                {processo.numero_talao || '-'}
+                            </span>
+                            </div>
+
+                            <small className={`processo-status ${statusClasse}`}>
+                            {processo.status}
+                            </small>
+                        </div>
+                        </div>
+                    )
+                })}
+                </div>
+            </div>
+            )}
+
+            {abaMaster === 'filhos' && (
+            <div className="master-360-content">
+                <div className="master-children-list">
+                {filhosMasterSelecionada.map((filho) => (
+                    <div className="master-child-card" key={filho.id}>
                     <div>
-                        <strong>{processo.sequencia} - {processo.processo}</strong>
-                        <span>Recurso: {processo.recurso || 'Não definido'}</span>
+                        <strong>{filho.codigo_interno_item}</strong>
+                        <span>
+                        {filho.base_mm || '-'} x {filho.altura_mm || '-'} x {filho.comprimento_mm || '-'}
+                        </span>
                     </div>
 
-                    <span className={`op-status ${classeProcessoStatus(processo.status)}`}>
-                        {processo.status}
-                    </span>
+                    <div>
+                        <small>{filho.tipo_material || '-'}</small>
+                        <strong>{Number(filho.volume_m3 || 0).toFixed(2)} m³</strong>
+                    </div>
                     </div>
                 ))}
-                </div>
 
+                {!filhosMasterSelecionada.length && (
+                    <div className="empty">
+                    Nenhum filho vinculado a esta Master.
+                    </div>
+                )}
+                </div>
             </div>
+            )}
+
+            {abaMaster === 'apontamentos' && (
+            <div className="master-360-content">
+                <div className="empty">
+                Apontamentos serão exibidos aqui após a estruturação do pré-apontamento e validação PCP.
+                </div>
+            </div>
+            )}
+
+            {abaMaster === 'historico' && (
+            <div className="master-360-content">
+                <div className="empty">
+                Histórico da Master será exibido aqui futuramente, incluindo mudanças de status, reprogramações, sobras, peças mortas e retrabalhos.
+                </div>
+            </div>
+            )}
+        </div>
         </div>
         )}      
     </div>
