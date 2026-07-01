@@ -134,29 +134,21 @@ export default function CarteiraProjetos() {
         .from('itens_projeto')
         .select(`
             *,
-            projetos!inner (
+            projetos (...),
+            carregamentos_projeto (...),
+            itens_filhos:itens_projeto!item_pai_id (
                 id,
-                codigo_interno,
-                nome_projeto,
-                cliente,
-                data_entrega,
-                fase_projeto,
-                ativo,
-                created_at
+                codigo_interno_item,
+                tipo_material,
+                volume_m3,
+                base_mm,
+                altura_mm,
+                comprimento_mm
             ),
-            carregamentos_projeto (
-                id,
-                numero_carregamento,
-                data_prevista
-            ),
-            ordens_producao (
-                id,
-                numero_op,
-                status
-            )
+            ordens_producao (...)
         `)
         .eq('ativo', true)
-        .eq('tipo_item', 'FILHO')
+        .eq('tipo_item', 'MASTER')
         .eq('projetos.ativo', true)
         .eq('projetos.fase_projeto', 'Pronto para produção')
         .order('codigo_interno_item', { ascending: true })
@@ -185,18 +177,13 @@ export default function CarteiraProjetos() {
         return rotas.length ? rotas.join(' → ') : 'Não definida'
     }
 
-    function gerarNumeroOPBase() {
-        const agora = new Date()
+    async function gerarNumeroOPBase() {
+        const { data, error } = await supabase.rpc('gerar_numero_op')
 
-        const ano = String(agora.getFullYear()).slice(2)
-        const mes = String(agora.getMonth() + 1).padStart(2, '0')
-        const dia = String(agora.getDate()).padStart(2, '0')
-        const hora = String(agora.getHours()).padStart(2, '0')
-        const minuto = String(agora.getMinutes()).padStart(2, '0')
-        const segundo = String(agora.getSeconds()).padStart(2, '0')
+        if (error) throw error
 
-        return `${ano}${mes}${dia}${hora}${minuto}${segundo}`
-        }
+        return data
+    }
 
 
     function montarProcessosOP(item, ordemProducaoId, numeroOPBase) {
@@ -253,9 +240,10 @@ export default function CarteiraProjetos() {
     }
 
 
-    async function criarOP(item) {
+    async function criarOP(master) {
         try {
-            const numeroOP = gerarNumeroOP()
+            const numeroOPBase = await gerarNumeroOPBase()
+            const numeroOP = `OP-${numeroOPBase}`
 
             const { data: opCriada, error: erroOP } = await supabase
             .from('ordens_producao')
@@ -275,7 +263,7 @@ export default function CarteiraProjetos() {
 
             if (erroOP) throw erroOP
 
-            const processos = montarProcessosOP(item, opCriada.id)
+            const processos = montarProcessosOP(item, opCriada.id, numeroOPBase)
 
             if (processos.length) {
             const { error: erroProcessos } = await supabase
