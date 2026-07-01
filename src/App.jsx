@@ -149,7 +149,7 @@ function App() {
             {menuAberto === 'programacao' && (
               <div className="submenu">
                 <button onClick={() => setPaginaAtual('carteira-projetos')}>
-                  Carteira de Projetos
+                  Carteira de Produção
                 </button>
 
                 <button onClick={() => setPaginaAtual('carga-maquina')}>

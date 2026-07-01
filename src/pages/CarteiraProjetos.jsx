@@ -125,43 +125,86 @@ export default function CarteiraProjetos() {
             : '↓'
         }
 
-  async function carregarCarteira() {
-    try {
-      setCarregando(true)
-      setErro('')
+    async function carregarCarteira() {
+        try {
+            setCarregando(true)
+            setErro('')
 
-      const { data, error } = await supabase
-        .from('itens_projeto')
-        .select(`
-            *,
-            projetos (...),
-            carregamentos_projeto (...),
-            itens_filhos:itens_projeto!item_pai_id (
+            const { data: masters, error: erroMasters } = await supabase
+            .from('itens_projeto')
+            .select(`
+                *,
+                projetos!inner (
                 id,
+                codigo_interno,
+                nome_projeto,
+                cliente,
+                data_entrega,
+                fase_projeto,
+                ativo,
+                created_at
+                ),
+                carregamentos_projeto (
+                id,
+                numero_carregamento,
+                data_prevista
+                ),
+                ordens_producao (
+                id,
+                numero_op,
+                numero_op_base,
+                status
+                )
+            `)
+            .eq('ativo', true)
+            .in('tipo_item', ['PAI', 'MASTER'])
+            .eq('projetos.ativo', true)
+            .eq('projetos.fase_projeto', 'Pronto para produção')
+            .order('codigo_interno_item', { ascending: true })
+
+            if (erroMasters) throw erroMasters
+
+            const idsMasters = (masters || []).map((master) => master.id)
+
+            let filhos = []
+
+            if (idsMasters.length) {
+            const { data: filhosData, error: erroFilhos } = await supabase
+                .from('itens_projeto')
+                .select(`
+                id,
+                item_pai_id,
                 codigo_interno_item,
                 tipo_material,
                 volume_m3,
                 base_mm,
                 altura_mm,
-                comprimento_mm
-            ),
-            ordens_producao (...)
-        `)
-        .eq('ativo', true)
-        .eq('tipo_item', 'MASTER')
-        .eq('projetos.ativo', true)
-        .eq('projetos.fase_projeto', 'Pronto para produção')
-        .order('codigo_interno_item', { ascending: true })
+                comprimento_mm,
+                pcp_destopadeira,
+                pcp_cnc,
+                pcp_acabamento
+                `)
+                .eq('ativo', true)
+                .eq('tipo_item', 'FILHO')
+                .in('item_pai_id', idsMasters)
 
-      if (error) throw error
+            if (erroFilhos) throw erroFilhos
 
-      setItens(data || [])
-    } catch (error) {
-      setErro(error.message)
-    } finally {
-      setCarregando(false)
+            filhos = filhosData || []
+            }
+
+            const mastersComFilhos = (masters || []).map((master) => ({
+            ...master,
+            itens_filhos: filhos.filter((filho) => filho.item_pai_id === master.id)
+            }))
+
+            setItens(mastersComFilhos)
+        } catch (error) {
+            setErro(error.message)
+        } finally {
+            setCarregando(false)
+        }
     }
-  }
 
   useEffect(() => {
     carregarCarteira()
@@ -250,11 +293,13 @@ export default function CarteiraProjetos() {
             .insert([
                 {
                 numero_op: numeroOP,
-                projeto_id: item.projeto_id,
-                carregamento_id: item.carregamento_id,
-                item_id: item.id,
+                numero_op_base: numeroOPBase,
+                projeto_id: master.projeto_id,
+                carregamento_id: master.carregamento_id,
+                item_id: master.id,
+                item_pai_id: master.id,
                 status: 'Em programação',
-                volume_m3: item.volume_m3 || 0,
+                volume_m3: master.volume_m3 || 0,
                 ativo: true
                 }
             ])
@@ -263,7 +308,7 @@ export default function CarteiraProjetos() {
 
             if (erroOP) throw erroOP
 
-            const processos = montarProcessosOP(item, opCriada.id, numeroOPBase)
+            const processos = montarProcessosOP(master, opCriada.id, numeroOPBase)
 
             if (processos.length) {
             const { error: erroProcessos } = await supabase
@@ -277,7 +322,7 @@ export default function CarteiraProjetos() {
         } catch (error) {
             alert(error.message)
         }
-        }
+    }
 
     function classeStatusOP(status) {
         switch (status) {
@@ -347,7 +392,7 @@ export default function CarteiraProjetos() {
       <header className="page-header">
         <div>
           <p className="eyebrow">Programação</p>
-          <h2>Carteira de Projetos</h2>
+          <h2>Carteira de Produção</h2>
           <span>Itens disponíveis para geração de O.P e talões de processo.</span>
         </div>
 
@@ -561,93 +606,102 @@ export default function CarteiraProjetos() {
             </thead>
 
             <tbody>
-            {itensFiltrados.map((item) => {
-                const temOP = item.ordens_producao?.length > 0
-                const op = temOP ? item.ordens_producao[0] : null
+                {itensFiltrados.map((master) => {
+                    const temOP = master.ordens_producao?.length > 0
+                    const op = temOP ? master.ordens_producao[0] : null
 
-                return (
-                <tr key={item.id}>
-                    <td>
-                    <strong>{item.projetos?.codigo_interno || '-'}</strong>
-                    <br />
-                    <small>{item.projetos?.nome_projeto || '-'}</small>
-                    </td>
+                    const filhos = master.itens_filhos || []
 
-                    <td>
-                    {item.carregamentos_projeto
-                        ? `Carregamento ${item.carregamentos_projeto.numero_carregamento}`
-                        : '-'}
-                    </td>
+                    const volumeFilhos = filhos.reduce(
+                    (total, filho) => total + Number(filho.volume_m3 || 0),
+                    0
+                    )
 
-                    <td>{item.codigo_interno_item}</td>
-                    <td>{item.tipo_material}</td>
+                    return (
+                    <tr key={master.id}>
+                        <td>
+                        <strong>{master.projetos?.codigo_interno || '-'}</strong>
+                        <br />
+                        <small>{master.projetos?.nome_projeto || '-'}</small>
+                        </td>
 
-                    <td>
-                    {item.base_mm || '-'} x {item.altura_mm || '-'} x {item.comprimento_mm || '-'}
-                    </td>
+                        <td>
+                        {master.carregamentos_projeto
+                            ? `Carregamento ${master.carregamentos_projeto.numero_carregamento}`
+                            : '-'}
+                        </td>
 
-                    <td>{item.volume_m3 || '-'}</td>
-                    <td>{obterRotaPCP(item)}</td>
+                        <td>
+                        <strong>{master.codigo_interno_item}</strong>
+                        <br />
+                        <small>
+                            {master.base_mm || '-'} x {master.altura_mm || '-'} x {master.comprimento_mm || '-'}
+                        </small>
+                        </td>
 
-                    <td>
-                        {op?.numero_op || '-'}
-                    </td>
+                        <td>
+                        <strong>{filhos.length}</strong>
+                        <br />
+                        <small>itens filhos</small>
+                        </td>
 
-                    <td>
+                        <td>{Number(master.volume_m3 || 0).toFixed(2)}</td>
+
+                        <td>{volumeFilhos.toFixed(2)}</td>
+
+                        <td>{op?.numero_op || '-'}</td>
+
+                        <td>
                         {op ? (
                             <span className={`op-status ${classeStatusOP(op.status)}`}>
                             {op.status}
                             </span>
                         ) : (
-                            <span className="op-status sem-op">
-                            Sem OP
-                            </span>
+                            <span className="op-status sem-op">Sem OP</span>
                         )}
-                    </td>
+                        </td>
 
-                    <td>
-                    {op ? (
-                        <div className="table-actions">
-                        <button
+                        <td>
+                        {op ? (
+                            <div className="table-actions">
+                            <button
+                                type="button"
+                                className="table-icon-action"
+                                onClick={() => visualizarOP(op)}
+                                title="Visualizar OP"
+                            >
+                                <Eye size={16} />
+                            </button>
+                            </div>
+                        ) : (
+                            <button
                             type="button"
-                            className="table-icon-action"
-                            onClick={() => visualizarOP(op)}
-                            title="Visualizar OP"
-                        >
-                            <Eye size={16} />
-                        </button>
-                        </div>
-                    ) : (
-                        <button
-                        type="button"
-                        className="table-action"
-                        onClick={() => criarOP(item)}
-                        >
-                        Criar OP
-                        </button>
-                    )}
+                            className="table-action"
+                            onClick={() => criarOP(master)}
+                            >
+                            Criar OP
+                            </button>
+                        )}
+                        </td>
+
+                        <td>
+                        {master.carregamentos_projeto?.data_prevista ||
+                            master.projetos?.data_entrega ||
+                            '-'}
+                        </td>
+                    </tr>
+                    )
+                })}
+
+                {!itensFiltrados.length && (
+                    <tr>
+                    <td colSpan="10" className="empty">
+                        Nenhuma Master disponível na carteira.
                     </td>
-
-                    <td>{item.projetos?.created_at?.slice(0, 10) || '-'}</td>
-
-                    <td>
-                    {item.carregamentos_projeto?.data_prevista ||
-                        item.projetos?.data_entrega ||
-                        '-'}
-                    </td>
-                </tr>
-                )
-            })}
-
-            {!itensFiltrados.length && (
-                <tr>
-                <td colSpan="12" className="empty">
-                    Nenhum item disponível na carteira.
-                </td>
-                </tr>
-            )}
-            </tbody>
-          </table>
+                    </tr>
+                )}
+                </tbody>
+            </table>
         </div>
       </section>
 
