@@ -1,14 +1,5 @@
 import { useState } from 'react'
-import {
-  LayoutDashboard,
-  FolderKanban,
-  Factory,
-  ClipboardList,
-  Settings,
-  BarChart3,
-  History,
-  Wrench,
-} from 'lucide-react'
+import { LayoutDashboard, FolderKanban, Factory, ClipboardList, Settings, BarChart3, History, Wrench, } from 'lucide-react'
 
 import Dashboard from './pages/Dashboard.jsx'
 import NovoProjeto from './pages/NovoProjeto.jsx'
@@ -17,16 +8,16 @@ import EngenhariaImportar from './pages/EngenhariaImportar.jsx'
 import DetalheProjeto from './pages/DetalheProjeto.jsx'
 import CarteiraProjetos from './pages/CarteiraProjetos.jsx'
 import CargaMaquina from './pages/CargaMaquina.jsx'
+import Producao from './pages/Producao.jsx'
 
 function App() {
+
   const [paginaAtual, setPaginaAtual] = useState('dashboard')
   const [projetoSelecionado, setProjetoSelecionado] = useState(null)
   const [projetoImportacao, setProjetoImportacao] = useState(null)
   const [menuAberto, setMenuAberto] = useState(null)
 
-  function alternarMenu(menu) {
-    setMenuAberto((atual) => (atual === menu ? null : menu))
-  }
+  function alternarMenu(menu) { setMenuAberto((atual) => (atual === menu ? null : menu)) }
 
   function renderPage() {
   switch (paginaAtual) {
@@ -67,6 +58,9 @@ function App() {
     
     case 'carga-maquina':
       return <CargaMaquina />
+
+    case 'producao':
+      return <Producao />
 
     default:
       return <Dashboard />
@@ -159,9 +153,12 @@ function App() {
             )}
           </div>
 
-          <button className="menu-item">
-            <Wrench size={18} />
-            Produção
+          <button
+              className={`menu-item ${paginaAtual === 'producao' ? 'active' : ''}`}
+              onClick={() => setPaginaAtual('producao')}
+            >
+              <Wrench size={18} />
+              Produção
           </button>
 
           <button className="menu-item">

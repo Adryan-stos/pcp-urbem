@@ -3,6 +3,10 @@ import { RefreshCw, ArrowUp, ArrowDown } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 const setores = [
+  { id: 'AUTOCLAVE', label: 'Autoclave' },
+  { id: 'GRADEADOR', label: 'Gradeador' },
+  { id: 'ESTUFA', label: 'Estufa' },
+  { id: 'CLASSIFICADORA', label: 'Classificadora' },
   { id: 'OTIMIZADORA/FINGER', label: 'Otimizadora / Finger' },
   { id: 'PLAINA', label: 'Plainas' },
   { id: 'PRENSA', label: 'Prensas' },
@@ -22,7 +26,7 @@ const statusPCP = [
 ]
 
 export default function CargaMaquina() {
-  const [setorAtual, setSetorAtual] = useState('OTIMIZADORA/FINGER')
+  const [setorAtual, setSetorAtual] = useState('AUTOCLAVE')
   const [processos, setProcessos] = useState([])
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState('')
@@ -82,7 +86,7 @@ export default function CargaMaquina() {
   }, [])
 
   const processosDoSetor = processos
-    .filter((processo) => processo.processo === setorAtual)
+    .filter((processo) => processo.processo === setorAtual || processo.recurso === setorAtual )
     .sort((a, b) => {
         const prioridadeA = a.prioridade ?? 999
         const prioridadeB = b.prioridade ?? 999

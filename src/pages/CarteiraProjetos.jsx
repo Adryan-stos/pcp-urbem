@@ -6,7 +6,6 @@ import { useCarteira } from '../hooks/useCarteira.js'
 
 
 export default function CarteiraProjetos() {
-    
   const {itens, carregando, erro, opSelecionada,processosOP, modalOPAberta, masterSelecionada, abaMaster, setAbaMaster,
         setModalOPAberta, atualizarCarteira, handleCriarOP, visualizarOP } = useCarteira()
   const [filtros, setFiltros] = useState({ projeto: '', carregamento: '', item: '', 

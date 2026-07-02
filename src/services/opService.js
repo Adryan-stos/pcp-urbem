@@ -13,14 +13,17 @@ export function montarProcessosOP(item, ordemProducaoId, numeroOPBase) {
 
   const material = String(item.tipo_material || '').toUpperCase()
   const isCLT = material.includes('CLT')
-  const isMLC = material.includes('MLC')
 
-  function adicionarProcesso(
+  function adicionarProcesso({
     sequencia,
     processo,
     recurso = null,
-    tipoItemProcesso = 'FILHO'
-  ) {
+    tipoItemProcesso = 'FILHO',
+    produtoEntrada = null,
+    quantidadeEntradaPrevista = null,
+    produtoSaida = null,
+    quantidadeSaidaPrevista = null
+  }) {
     const primeiroProcesso = processos.length === 0
 
     processos.push({
@@ -30,6 +33,10 @@ export function montarProcessosOP(item, ordemProducaoId, numeroOPBase) {
       processo,
       recurso,
       tipo_item_processo: tipoItemProcesso,
+      produto_entrada: produtoEntrada,
+      quantidade_entrada_prevista: quantidadeEntradaPrevista,
+      produto_saida: produtoSaida,
+      quantidade_saida_prevista: quantidadeSaidaPrevista,
       status: primeiroProcesso ? 'Liberado para programação' : 'Pendente',
       liberado_programacao: primeiroProcesso,
       prioridade: null,
@@ -37,30 +44,106 @@ export function montarProcessosOP(item, ordemProducaoId, numeroOPBase) {
     })
   }
 
-  if (isMLC) {
-    adicionarProcesso(10, 'OTIMIZADORA/FINGER', 'OTIMIZADORA/FINGER', 'MASTER')
-    adicionarProcesso(20, 'PLAINA', 'A DEFINIR', 'MASTER')
-    adicionarProcesso(30, 'PRENSA', 'A DEFINIR', 'MASTER')
+  adicionarProcesso({
+    sequencia: 10,
+    processo: 'AUTOCLAVE',
+    recurso: 'AUTOCLAVE',
+    tipoItemProcesso: 'LAMELA',
+    produtoEntrada: 'LAMELA',
+    produtoSaida: 'LAMELA'
+  })
 
-    if (item.pcp_destopadeira) {
-      adicionarProcesso(40, 'DESTOPADEIRA', 'DESTOPADEIRA', 'FILHO')
-    }
+  adicionarProcesso({
+    sequencia: 15,
+    processo: 'GRADEADOR',
+    recurso: 'GRADEADOR',
+    tipoItemProcesso: 'LAMELA',
+    produtoEntrada: 'LAMELA',
+    produtoSaida: 'LAMELA'
+  })
 
-    if (item.pcp_cnc) {
-      adicionarProcesso(50, 'CNC', 'CNC', 'FILHO')
-    }
+  adicionarProcesso({
+    sequencia: 20,
+    processo: 'ESTUFA',
+    recurso: 'ESTUFA',
+    tipoItemProcesso: 'LAMELA',
+    produtoEntrada: 'LAMELA',
+    produtoSaida: 'LAMELA'
+  })
 
-    if (item.pcp_acabamento) {
-      adicionarProcesso(60, 'ACABAMENTO', 'ACABAMENTO', 'FILHO')
-    }
+  adicionarProcesso({
+    sequencia: 25,
+    processo: 'CLASSIFICADORA',
+    recurso: 'CLASSIFICADORA',
+    tipoItemProcesso: 'LAMELA',
+    produtoEntrada: 'LAMELA',
+    produtoSaida: 'LAMELA'
+  })
+
+  adicionarProcesso({
+    sequencia: 30,
+    processo: 'OTIMIZADORA/FINGER',
+    recurso: 'OTIMIZADORA/FINGER',
+    tipoItemProcesso: 'BLANK',
+    produtoEntrada: 'LAMELA',
+    produtoSaida: 'BLANK'
+  })
+
+  adicionarProcesso({
+    sequencia: 35,
+    processo: 'PLAINA',
+    recurso: 'A DEFINIR',
+    tipoItemProcesso: 'BLANK',
+    produtoEntrada: 'BLANK',
+    produtoSaida: 'BLANK'
+  })
+
+  adicionarProcesso({
+    sequencia: 40,
+    processo: 'PRENSA',
+    recurso: isCLT ? 'MINDA' : 'A DEFINIR',
+    tipoItemProcesso: 'MASTER',
+    produtoEntrada: 'BLANK',
+    produtoSaida: 'MASTER',
+    quantidadeSaidaPrevista: 1
+  })
+
+  if (item.pcp_destopadeira) {
+    adicionarProcesso({
+      sequencia: 44,
+      processo: 'DESTOPADEIRA',
+      recurso: 'DESTOPADEIRA',
+      tipoItemProcesso: 'FILHO',
+      produtoEntrada: 'MASTER',
+      quantidadeEntradaPrevista: 1,
+      produtoSaida: 'FILHO'
+    })
   }
 
-  if (isCLT) {
-    adicionarProcesso(10, 'OTIMIZADORA/FINGER', 'OTIMIZADORA/FINGER', 'MASTER')
-    adicionarProcesso(20, 'PLAINA', 'A DEFINIR', 'MASTER')
-    adicionarProcesso(30, 'PRENSA', 'MINDA', 'MASTER')
-    adicionarProcesso(40, 'CNC', 'CNC', 'FILHO')
-    adicionarProcesso(50, 'ACABAMENTO', 'ACABAMENTO', 'FILHO')
+  if (item.pcp_cnc) {
+    adicionarProcesso({
+      sequencia: 50,
+      processo: 'CNC',
+      recurso: 'CNC',
+      tipoItemProcesso: 'FILHO',
+      produtoEntrada: item.pcp_destopadeira ? 'FILHO' : 'MASTER',
+      quantidadeEntradaPrevista: 1,
+      produtoSaida: 'FILHO',
+      quantidadeSaidaPrevista: 1
+    })
+  }
+
+  if (item.pcp_acabamento) {
+    adicionarProcesso({
+      sequencia: 55,
+      processo: 'ACABAMENTO',
+      recurso: 'ACABAMENTO',
+      tipoItemProcesso: 'FILHO',
+      produtoEntrada: 'FILHO',
+      quantidadeEntradaPrevista: 1,
+      produtoSaida: 'FILHO',
+      quantidadeSaidaPrevista: 1
+    })
   }
 
   return processos
