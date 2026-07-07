@@ -147,6 +147,26 @@ export default function CarteiraProjetos() {
         }
         }
 
+    function obterStatusCarteira(op) {
+        const processos = op?.op_processos || []
+
+        if (!processos.length) return 'Em programação'
+
+        if (processos.every(p => p.status === 'Concluído'))
+            return 'Concluído'
+
+        if (processos.some(p => p.status === 'Em pausa'))
+            return 'Em pausa'
+
+        if (processos.some(p => p.status === 'Em produção'))
+            return 'Em produção'
+
+        if (processos.some(p => p.status === 'Programado'))
+            return 'Em programação'
+
+        return op.status
+    }
+
 
   return (
     <div className="page">
@@ -347,9 +367,9 @@ export default function CarteiraProjetos() {
                     const processos = op?.op_processos || []
                     const totalProcessos = processos.length
 
-                    const processosFinalizados = processos.filter((processo) =>
-                    ['Finalizado', 'Concluído'].includes(processo.status)
-                    ).length
+                    const processosFinalizados = processos.filter( (p) => p.status === 'Concluído' ).length
+
+                    const processoEmProducao = processos.find((p) => ['Programado', 'Em produção', 'Em pausa'].includes(p.status))
 
                     const percentualProgresso =
                     totalProcessos > 0 ? (processosFinalizados / totalProcessos) * 100 : 0
@@ -409,8 +429,8 @@ export default function CarteiraProjetos() {
 
                         <td>
                         {op ? (
-                            <span className={`op-status ${classeStatusOP(op.status)}`}>
-                            {op.status}
+                            <span className={`op-status ${classeStatusOP(obterStatusCarteira(op))}`}>
+                            {obterStatusCarteira(op)}
                             </span>
                         ) : (
                             <span className="op-status sem-op">Sem OP</span>

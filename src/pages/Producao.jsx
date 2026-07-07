@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import CentroExecucao from '../components/Producao/CentroExecucao.jsx'
 import ExecucaoProducao from '../components/Producao/ExecucaoProducao.jsx'
 
 
 export default function Producao() {
   const [aba, setAba] = useState('centro')
+  const [talaoExecucaoInicial, setTalaoExecucaoInicial] = useState('')
 
   return (
     <div className="page">
@@ -34,9 +35,17 @@ export default function Producao() {
         </button>
       </div>
 
-      {aba === 'centro' && <CentroExecucao />}
+      {aba === 'centro' && (
+        <CentroExecucao
+          onExecutar={(numeroTalao) => {
+            setTalaoExecucaoInicial(numeroTalao)
+            setAba('execucao')
+          }}
+        />
+      )}
 
-      {aba === 'execucao' && <ExecucaoProducao />}
+      {aba === 'execucao' && ( <ExecucaoProducao talaoInicial={talaoExecucaoInicial} /> )}
+
     </div>
   )
 }

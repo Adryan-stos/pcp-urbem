@@ -2,7 +2,7 @@ import Resumo from './Resumo.jsx'
 import Fluxo from './Fluxo.jsx'
 import ArvoreProducao from './ArvoreProducao.jsx'
 import Apontamento from './Apontamento.jsx'
-import Historico from './Historico.jsx'
+import MateriaPrima from './MateriaPrima.jsx'
 
 export default function Master360({
   op,
@@ -61,10 +61,10 @@ export default function Master360({
 
           <button
             type="button"
-            className={abaAtual === 'historico' ? 'active' : ''}
-            onClick={() => setAbaAtual('historico')}
+            className={abaAtual === 'materias-primas' ? 'active' : ''}
+            onClick={() => setAbaAtual('materias-primas')}
           >
-            Histórico
+            Matérias-Primas
           </button>
         </div>
 
@@ -78,7 +78,7 @@ export default function Master360({
 
         {abaAtual === 'apontamentos' && <Apontamento op={op} />}
 
-        {abaAtual === 'historico' && <Historico />}
+        {abaAtual === 'materias-primas' && <MateriaPrima />}
       </div>
     </div>
   )

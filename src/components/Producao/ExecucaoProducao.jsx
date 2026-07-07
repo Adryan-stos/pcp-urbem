@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import BuscaTalao from './BuscaTalao.jsx'
 import { buscarTalaoExecucao, iniciarExecucaoProducao } from '../../services/execucaoService.js'
 import PainelExecucao from './PainelExecucao.jsx'
 import ValidacaoInicial from './ValidacaoInicial.jsx'
 
 
-export default function ExecucaoProducao() {
+export default function ExecucaoProducao({ talaoInicial = '' }) {
   const [busca, setBusca] = useState('')
   const [talao, setTalao] = useState(null)
   const [carregando, setCarregando] = useState(false)
@@ -13,7 +13,7 @@ export default function ExecucaoProducao() {
   const [podeExecutar, setPodeExecutar] = useState(false)
   const [mensagemExecucao, setMensagemExecucao] = useState('')
   const [processosPendentes, setProcessosPendentes] = useState([])
-  const [dadosInicio, setDadosInicio] = useState({ espessuraInicio: '', larguraInicio: '', comprimentoInicio: '', loteEntrada: '', observacao: '' })
+  const [dadosInicio, setDadosInicio] = useState({ loteEntrada: '',espessuraInicio: '', larguraInicio: '', comprimentoInicio: '', observacao: '' })
   const [somenteConsulta, setSomenteConsulta] = useState(false)
 
   function limparBusca() {
@@ -24,8 +24,40 @@ export default function ExecucaoProducao() {
     setMensagemExecucao('')
     setProcessosPendentes([])
     setSomenteConsulta(false)
-    setDadosInicio({ espessuraInicio: '', larguraInicio: '', comprimentoInicio: '', loteEntrada: '', observacao: '' })
+    setDadosInicio({ loteEntrada: '',espessuraInicio: '', larguraInicio: '', comprimentoInicio: '', observacao: '' })
   }
+  
+useEffect(() => {
+  if (!talaoInicial) return
+
+  setBusca(talaoInicial)
+
+  async function carregarTalaoInicial() {
+    try {
+      setCarregando(true)
+      setErro('')
+      setTalao(null)
+      setPodeExecutar(false)
+      setMensagemExecucao('')
+      setProcessosPendentes([])
+      setSomenteConsulta(false)
+
+      const dados = await buscarTalaoExecucao(talaoInicial)
+
+      setTalao(dados.talao)
+      setPodeExecutar(dados.podeExecutar)
+      setMensagemExecucao(dados.mensagem)
+      setProcessosPendentes(dados.processosPendentes)
+      setSomenteConsulta(dados.somenteConsulta ?? false)
+    } catch (error) {
+      setErro(error.message)
+    } finally {
+      setCarregando(false)
+    }
+  }
+
+  carregarTalaoInicial()
+}, [talaoInicial])
 
 async function buscarTalao() {
     try {

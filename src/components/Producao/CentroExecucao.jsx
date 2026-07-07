@@ -15,7 +15,7 @@ const setores = [
   'ACABAMENTO'
 ]
 
-export default function CentroExecucao() {
+export default function CentroExecucao({ onExecutar }) {
   const [setorSelecionado, setSetorSelecionado] = useState('AUTOCLAVE')
   const { taloes, carregando, erro, carregarTaloes } = useCentroExecucao()
 
@@ -85,7 +85,8 @@ export default function CentroExecucao() {
                   talao.ordens_producao?.itens_projeto?.codigo_interno_item || '-',
                 projeto:
                   talao.ordens_producao?.itens_projeto?.projetos?.codigo_interno || '-'
-              }}
+                }}
+                onExecutar={() => onExecutar(talao.numero_talao)}
             />
           ))}
 

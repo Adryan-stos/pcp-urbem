@@ -1,4 +1,4 @@
-export default function CardExecucao({ card }) {
+export default function CardExecucao({ card, onExecutar }) {
   const criticidadeLabel = {
     'no-prazo': 'No prazo',
     atencao: 'Atenção',
@@ -33,7 +33,7 @@ export default function CardExecucao({ card }) {
       <div className="exec-card-footer">
         <span>{card.status}</span>
 
-        <button type="button">
+        <button type="button" onClick={onExecutar}>
           Executar
         </button>
       </div>
