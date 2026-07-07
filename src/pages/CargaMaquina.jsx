@@ -67,7 +67,7 @@ export default function CargaMaquina() {
         `)
         .eq('ativo', true)
         .eq('liberado_programacao', true)
-        .in('status', ['Liberado para programação', 'Programado', 'Em produção'])
+        .in('status', ['Liberado para programação', 'Programado', 'Em produção', 'Em pausa'])
         .order('prioridade', { ascending: true, nullsFirst: true })
         .order('ordem_fila', { ascending: true, nullsFirst: true })
 

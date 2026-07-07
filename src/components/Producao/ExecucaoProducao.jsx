@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import BuscaTalao from './BuscaTalao.jsx'
-import { buscarTalaoExecucao } from '../../services/execucaoService.js'
+import { buscarTalaoExecucao, iniciarExecucaoProducao } from '../../services/execucaoService.js'
+import PainelExecucao from './PainelExecucao.jsx'
+import ValidacaoInicial from './ValidacaoInicial.jsx'
+
 
 export default function ExecucaoProducao() {
   const [busca, setBusca] = useState('')
@@ -9,18 +12,30 @@ export default function ExecucaoProducao() {
   const [erro, setErro] = useState('')
   const [podeExecutar, setPodeExecutar] = useState(false)
   const [mensagemExecucao, setMensagemExecucao] = useState('')
-  const [processosPendentes, setProcessosPendentes] = useState([])  
+  const [processosPendentes, setProcessosPendentes] = useState([])
+  const [dadosInicio, setDadosInicio] = useState({ espessuraInicio: '', larguraInicio: '', comprimentoInicio: '', loteEntrada: '', observacao: '' })
+  const [somenteConsulta, setSomenteConsulta] = useState(false)
 
-  async function buscarTalao() {
+  function limparBusca() {
+    setTalao(null)
+    setBusca('')
+    setErro('')
+    setPodeExecutar(false)
+    setMensagemExecucao('')
+    setProcessosPendentes([])
+    setSomenteConsulta(false)
+    setDadosInicio({ espessuraInicio: '', larguraInicio: '', comprimentoInicio: '', loteEntrada: '', observacao: '' })
+  }
+
+async function buscarTalao() {
     try {
       setCarregando(true)
-
-      // Limpa os estados antes de uma nova busca
       setErro('')
       setTalao(null)
       setPodeExecutar(false)
       setMensagemExecucao('')
       setProcessosPendentes([])
+      setSomenteConsulta(false)
 
       const dados = await buscarTalaoExecucao(busca)
 
@@ -28,11 +43,42 @@ export default function ExecucaoProducao() {
       setPodeExecutar(dados.podeExecutar)
       setMensagemExecucao(dados.mensagem)
       setProcessosPendentes(dados.processosPendentes)
-
+      setSomenteConsulta(dados.somenteConsulta ?? false)
     } catch (error) {
       setErro(error.message)
     } finally {
       setCarregando(false)
+    }
+  }
+
+  async function iniciarProducao() {
+    try {
+      if (!talao?.id) return
+
+      if (
+        !dadosInicio.espessuraInicio ||
+        !dadosInicio.larguraInicio ||
+        !dadosInicio.comprimentoInicio
+      ) {
+        setErro('Informe espessura, largura e comprimento antes de iniciar.')
+        return
+      }
+
+      const processoAtualizado = await iniciarExecucaoProducao(talao.id, {
+        espessuraInicio: Number(dadosInicio.espessuraInicio),
+        larguraInicio: Number(dadosInicio.larguraInicio),
+        comprimentoInicio: Number(dadosInicio.comprimentoInicio),
+        observacao: dadosInicio.observacao
+      })
+
+      setTalao((atual) => ({
+        ...atual,
+        ...processoAtualizado
+      }))
+
+      setErro('')
+    } catch (error) {
+      setErro(error.message)
     }
   }
 
@@ -48,110 +94,23 @@ export default function ExecucaoProducao() {
 
       {erro && <div className="alert">{erro}</div>}
 
-      {carregando && (
-        <div className="empty-card">
-          Buscando talão...
-        </div>
+      {carregando && <div className="empty-card">Buscando talão...</div>}
+
+      {talao && ['Em produção', 'Em pausa'].includes(talao.status) && (
+        <PainelExecucao talao={talao} somenteConsulta={somenteConsulta} onNovaBusca={limparBusca} />
       )}
 
-      {talao && (
-        <section className="execucao-talao-card">
-          <div className="execucao-talao-header">
-            <div>
-              <span>Talão encontrado</span>
-              <h3>{talao.numero_talao}</h3>
-            </div>
-
-            <button
-              type="button"
-              className="btn ghost"
-              onClick={() => {
-                setTalao(null)
-                setBusca('')
-
-                setPodeExecutar(false)
-                setMensagemExecucao('')
-                setProcessosPendentes([])
-              }}
-            >
-              Nova busca
-            </button>
-          </div>
-
-          <div className="execucao-talao-grid">
-            <div>
-              <span>OP</span>
-              <strong>{talao.ordens_producao?.numero_op || '-'}</strong>
-            </div>
-
-            <div>
-              <span>Projeto</span>
-              <strong>
-                {talao.ordens_producao?.itens_projeto?.projetos?.codigo_interno || '-'}
-              </strong>
-            </div>
-
-            <div>
-              <span>Master</span>
-              <strong>
-                {talao.ordens_producao?.itens_projeto?.codigo_interno_item || '-'}
-              </strong>
-            </div>
-
-            <div>
-              <span>Processo</span>
-              <strong>{talao.sequencia} - {talao.processo}</strong>
-            </div>
-
-            <div>
-              <span>Recurso</span>
-              <strong>{talao.recurso || '-'}</strong>
-            </div>
-
-            <div>
-              <span>Status</span>
-              <strong>{talao.status}</strong>
-            </div>
-
-            <div>
-              <span>Entrada</span>
-              <strong>{talao.produto_entrada || '-'}</strong>
-            </div>
-
-            <div>
-              <span>Saída</span>
-              <strong>{talao.produto_saida || '-'}</strong>
-            </div>
-          </div>
-
-          {mensagemExecucao && (
-            <div className={`execucao-status-box ${podeExecutar ? 'liberado' : 'bloqueado'}`}>
-              <strong>
-                {podeExecutar ? 'Processo liberado' : 'Processo bloqueado'}
-              </strong>
-
-              <span>{mensagemExecucao}</span>
-
-              {!podeExecutar && processosPendentes.length > 0 && (
-                <ul>
-                  {processosPendentes.map((processo) => (
-                    <li key={processo.id}>
-                      {processo.sequencia} - {processo.processo} | {processo.status}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
-
-          <button
-            type="button"
-            className="execucao-start-button"
-            disabled={!podeExecutar}
-          >
-            {podeExecutar ? '▶ Iniciar Produção' : 'Processo bloqueado'}
-          </button>
-        </section>
+      {talao && !['Em produção', 'Em pausa'].includes(talao.status) && (
+        <ValidacaoInicial
+          talao={talao}
+          podeExecutar={podeExecutar}
+          mensagemExecucao={mensagemExecucao}
+          processosPendentes={processosPendentes}
+          dadosInicio={dadosInicio}
+          setDadosInicio={setDadosInicio}
+          onIniciar={iniciarProducao}
+          onNovaBusca={limparBusca}
+        />
       )}
     </div>
   )

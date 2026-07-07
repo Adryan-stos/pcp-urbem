@@ -26,6 +26,12 @@ export async function buscarTalaoExecucao(numeroTalao) {
       data_prevista_inicio,
       data_prevista_fim,
       status_pcp,
+      inicio_producao,
+      fim_producao,
+      iniciado_por,
+      finalizado_por,
+      tempo_execucao_segundos,
+      tempo_parado_segundos,
       ordens_producao (
         id,
         numero_op,
@@ -50,6 +56,31 @@ export async function buscarTalaoExecucao(numeroTalao) {
     .single()
 
   if (error) throw error
+  
+  const { data: paradaAberta, error: erroParadaAberta } = await supabase
+    .from('paradas_producao')
+    .select('id')
+    .eq('op_processo_id', talao.id)
+    .eq('status', 'Em pausa')
+    .maybeSingle()
+
+  if (erroParadaAberta) throw erroParadaAberta
+
+  if (paradaAberta) {
+    talao.status = 'Em pausa'
+    talao.status_pcp = 'Em pausa'
+  }
+
+  if (talao.status === 'Concluído') {
+    return {
+      talao,
+      podeExecutar: false,
+      mensagem:
+        'Este talão já foi concluído e está disponível apenas para consulta.',
+      processosPendentes: [],
+      somenteConsulta: true
+    }
+  }
 
   const { data: processosOP, error: erroProcessos } = await supabase
     .from('op_processos')
@@ -82,4 +113,50 @@ export async function buscarTalaoExecucao(numeroTalao) {
       : 'Existem processos anteriores pendentes.',
     processosPendentes
   }
+}
+
+
+export async function iniciarExecucaoProducao(opProcessoId, dadosInicio = {}) {
+  const inicio = new Date().toISOString()
+
+  // ==========================================================
+  // MODO DESENVOLVIMENTO
+  // Quando a autenticação estiver pronta, substituir pelo
+  // supabase.auth.getUser()
+  // ==========================================================
+  const usuario = {
+    id: null
+  }
+
+  const { data, error } = await supabase
+
+
+    .from('op_processos')
+    .update({
+      status: 'Em produção',
+      status_pcp: 'Em produção',
+      inicio_producao: inicio,
+      iniciado_por: usuario.id,
+
+      espessura_inicio: dadosInicio.espessuraInicio ?? null,
+      largura_inicio: dadosInicio.larguraInicio ?? null,
+      comprimento_inicio: dadosInicio.comprimentoInicio ?? null,
+      validacao_inicio_observacao: dadosInicio.observacao ?? null
+    })
+    .eq('id', opProcessoId)
+    .select()
+    .single()
+
+  if (error) throw error
+
+  if (talao.status === 'Concluído') {
+    return {
+      talao,
+      podeExecutar: false,
+      mensagem: 'Este talão já foi concluído e não pode ser apontado novamente.',
+      processosPendentes: []
+    }
+  }
+
+  return data
 }
