@@ -76,7 +76,7 @@ export default function Master360({
 
         {abaAtual === 'arvore' && <ArvoreProducao master={master} />}
 
-        {abaAtual === 'apontamentos' && <Apontamento />}
+        {abaAtual === 'apontamentos' && <Apontamento op={op} />}
 
         {abaAtual === 'historico' && <Historico />}
       </div>

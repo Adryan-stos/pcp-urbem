@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { RefreshCw, Pencil, Trash2 } from 'lucide-react'
+import { RefreshCw, Trash2, Eye} from 'lucide-react'
 import { listarProjetos, excluirProjeto } from '../services/projetosService'
 
 export default function ProjetosExistentes({ abrirProjeto }) {
@@ -158,7 +158,7 @@ export default function ProjetosExistentes({ abrirProjeto }) {
                         onClick={() => abrirProjeto(projeto)}
                         title="Abrir projeto"
                       >
-                        <Pencil size={15} />
+                        <Eye size={15} />
                       </button>
 
                       <button

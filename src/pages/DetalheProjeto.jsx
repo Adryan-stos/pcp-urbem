@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, ChevronDown, ChevronRight, Pencil, Eye} from 'lucide-react'
+import { Plus, ChevronDown, ChevronRight, Eye} from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 
