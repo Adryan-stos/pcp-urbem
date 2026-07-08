@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { LayoutDashboard, FolderKanban, Factory, ClipboardList, Settings, BarChart3, History, Wrench, } from 'lucide-react'
+import { LayoutDashboard, FolderKanban, Factory, ClipboardList, Settings, BarChart3, History, Wrench, PackageSearch} from 'lucide-react'
 
 import Dashboard from './pages/Dashboard.jsx'
 import NovoProjeto from './pages/NovoProjeto.jsx'
@@ -9,6 +9,8 @@ import DetalheProjeto from './pages/DetalheProjeto.jsx'
 import CarteiraProjetos from './pages/CarteiraProjetos.jsx'
 import CargaMaquina from './pages/CargaMaquina.jsx'
 import Producao from './pages/Producao.jsx'
+import Recebimentos from './pages/Recebimentos.jsx'
+import EstoqueMateriais from './pages/EstoqueMateriais.jsx'
 
 function App() {
 
@@ -62,6 +64,12 @@ function App() {
     case 'producao':
       return <Producao />
 
+    case 'recebimentos':
+      return <Recebimentos />
+
+    case 'estoque-materiais':
+      return <EstoqueMateriais />
+
     default:
       return <Dashboard />
   }
@@ -98,6 +106,7 @@ function App() {
               Projetos
             </button>
 
+
             {menuAberto === 'projetos' && (
             <div className="submenu">
               <button onClick={() => setPaginaAtual('novo-projeto')}>
@@ -109,6 +118,27 @@ function App() {
               </button>
             </div>
           )}
+            <div className="menu-group">
+              <button
+                className={`menu-item ${menuAberto === 'suprimentos' ? 'active' : ''}`}
+                onClick={() => alternarMenu('suprimentos')}
+              >
+                <PackageSearch size={18} />
+                Suprimentos
+              </button>
+
+              {menuAberto === 'suprimentos' && (
+                <div className="submenu">
+                  <button onClick={() => setPaginaAtual('recebimentos')}>
+                    Recebimentos
+                  </button>
+
+                  <button onClick={() => setPaginaAtual('estoque-materiais')}>
+                    Estoque de Materiais
+                  </button>
+                </div>
+              )}
+            </div>
 
           </div>
 

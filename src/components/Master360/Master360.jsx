@@ -78,7 +78,7 @@ export default function Master360({
 
         {abaAtual === 'apontamentos' && <Apontamento op={op} />}
 
-        {abaAtual === 'materias-primas' && <MateriaPrima />}
+        {abaAtual === 'materias-primas' && <MateriaPrima op={op} />}
       </div>
     </div>
   )

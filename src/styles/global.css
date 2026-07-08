@@ -3087,3 +3087,405 @@ td {
 .apontamento-observacao {
   grid-column: 1 / -1;
 }
+.diario-processo-list {
+  display: grid;
+  gap: 18px;
+}
+
+.diario-processo-card {
+  background: #f7fbfb;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 18px;
+}
+
+.diario-processo-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 14px;
+}
+
+.diario-processo-top span,
+.diario-grid span,
+.diario-observacao span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  margin-bottom: 5px;
+}
+
+.diario-processo-top h4 {
+  margin: 0;
+  color: var(--urbem-green);
+}
+
+.diario-processo-top small {
+  color: var(--muted);
+}
+
+.diario-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 11px;
+}
+
+.diario-grid div,
+.diario-observacao {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.diario-grid strong,
+.diario-observacao strong {
+  color: var(--urbem-green);
+}
+
+.diario-apontamento,
+.diario-paradas {
+  margin-top: 16px;
+}
+
+.diario-apontamento h5,
+.diario-paradas h5 {
+  margin: 0 0 10px;
+  color: var(--urbem-green);
+}
+
+.diario-parada-item {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+  margin-top: 10px;
+}
+
+.diario-parada-item strong {
+  color: var(--urbem-green);
+}
+
+.diario-parada-item span,
+.diario-parada-item small {
+  display: block;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.diario-parada-item p {
+  margin: 8px 0 0;
+  color: var(--urbem-green);
+}
+
+
+/* ==================================================
+   MATÉRIA PRIMA - MASTER 360
+================================================== */
+
+.materia-kpi-grid,
+.materia-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.materia-kpi-grid div,
+.materia-grid div,
+.materia-observacao {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.materia-kpi-grid {
+  margin-bottom: 18px;
+}
+
+.materia-kpi-grid span,
+.materia-grid span,
+.materia-card-header span,
+.materia-observacao span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  margin-bottom: 5px;
+}
+
+.materia-kpi-grid strong,
+.materia-grid strong,
+.materia-card-header h4,
+.materia-observacao strong {
+  color: var(--urbem-green);
+}
+
+.materia-list {
+  display: grid;
+  gap: 14px;
+}
+
+.materia-card {
+  background: #f7fbfb;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 18px;
+}
+
+.materia-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.materia-card-header h4 {
+  margin: 0;
+}
+
+.materia-card-header strong {
+  background: #f0fdf4;
+  color: #15803d;
+  border-radius: 999px;
+  padding: 7px 10px;
+  font-size: 12px;
+}
+
+.materia-observacao {
+  margin-top: 12px;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+
+/* ==================================================
+   MODAL RECEBIMENTO
+================================================== */
+
+.recebimento-modal {
+  width: min(1280px, 94vw);
+  max-height: 90vh;
+  overflow: auto;
+}
+
+.recebimento-section {
+  margin-top: 24px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 20px;
+  background: #f7fbfb;
+}
+
+.recebimento-section h4 {
+  margin: 0 0 16px;
+  color: var(--urbem-green);
+}
+
+/* ============================
+   Dados do filtro de recebimento
+============================ */
+
+.recebimento-filter-grid {
+  display: grid;
+  grid-template-columns: 0.8fr 1.3fr 0.8fr 1.5fr;
+  gap: 14px;
+}
+
+.recebimento-filter-grid input {
+  width: 100%;
+}
+
+/* ============================
+   Dados do Recebimento
+============================ */
+
+.recebimento-form-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 0.8fr 0.8fr 1.2fr;
+  gap: 18px;
+  align-items: end;
+}
+
+.recebimento-form-grid label {
+  display: grid;
+  gap: 8px;
+}
+
+.recebimento-form-grid input,
+.recebimento-form-grid select,
+.recebimento-form-grid textarea {
+  width: 100%;
+}
+
+/* ============================
+   Cabeçalho Itens Recebimento
+============================ */
+
+.recebimento-itens-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.recebimento-itens-header h4 {
+  margin: 0;
+}
+
+.recebimento-itens-header span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ============================
+   Tabela
+============================ */
+
+.recebimento-table {
+  display: grid;
+  gap: 10px;
+}
+
+.recebimento-table-head,
+.recebimento-table-row {
+  display: grid;
+  grid-template-columns:
+    minmax(320px, 2fr)
+    150px
+    110px
+    110px
+    120px
+    120px
+    80px;
+  gap: 12px;
+  align-items: center;
+}
+
+.recebimento-table-head span {
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.recebimento-table-row {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.recebimento-table-row input,
+.recebimento-table-row select {
+  width: 100%;
+}
+
+.recebimento-table-row strong {
+  white-space: nowrap;
+  color: var(--urbem-green);
+}
+
+.icon-only {
+  padding: 12px !important;
+  justify-content: center;
+}
+
+
+/*==================================================
+   MODAL ITENS POR NF
+================================================== */
+.recebimento-itens-detalhe {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  background: #f7fbfb;
+  border-radius: 16px;
+}
+
+.recebimento-item-detalhe {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1.2fr 0.8fr 0.8fr 1.8fr;
+  gap: 12px;
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.recebimento-item-detalhe strong {
+  color: var(--urbem-green);
+}
+
+.recebimento-item-detalhe span {
+  color: var(--muted);
+}
+
+.recebimento-row {
+  cursor: pointer;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.recebimento-row:hover {
+  background: #eef8f7;
+}
+
+.recebimento-row.open {
+  background: #e4f4f2;
+  box-shadow: inset 4px 0 0 var(--urbem-green);
+}
+
+.recebimento-row td {
+  border-bottom-color: #d7e8e6;
+}
+
+.recebimento-itens-detalhe {
+  border-left: 4px solid var(--urbem-green);
+}
+/* ==================================================
+   ESTOQUE MATERIAL
+================================================== */
+
+.estoque-filter-grid {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr 1.4fr 1.2fr 0.6fr 0.6fr;
+  gap: 14px;
+}
+
+.estoque-filter-grid input {
+  width: 100%;
+}
+
+.estoque-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.estoque-kpi-grid div {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 16px;
+}
+
+.estoque-kpi-grid span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.estoque-kpi-grid strong {
+  color: var(--urbem-green);
+  font-size: 20px;
+}
