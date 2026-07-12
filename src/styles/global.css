@@ -2140,6 +2140,14 @@ td {
   width: 100%;
 }
 
+.op-lote-filter-grid label {
+  display: grid;
+  gap: 6px;
+  color: var(--urbem-green);
+  font-size: 12px;
+  font-weight: 900;
+}
+
 .op-lote-estoque-item.selecionado {
   border-color: var(--urbem-green);
   background: #f0fdf9;
