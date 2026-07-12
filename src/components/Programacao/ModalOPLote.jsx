@@ -1,19 +1,32 @@
 import { useEffect, useState } from 'react'
-import { X } from 'lucide-react'
 import { listarEstoqueParaOPLote } from '../../services/opLoteService.js'
 
-export default function ModalOPLote({ aberto, processo,onCancelar, onSalvar, carregando }) 
-{
+const DADOS_INICIAIS = {
+  prioridade: '',
+  dataPrevistaInicio: '',
+  dataPrevistaFim: '',
+  observacao: ''
+}
+
+const FILTROS_INICIAIS = { material: '', nf: '', rua: '', secao: '' }
+
+export default function ModalOPLote({
+  aberto,
+  processo,
+  onCancelar,
+  onSalvar,
+  carregando
+}) {
   const [estoque, setEstoque] = useState([])
   const [erro, setErro] = useState('')
-  const [dados, setDados] = useState({ prioridade: '', dataPrevistaInicio: '', dataPrevistaFim: '', observacao: '' })
+  const [dados, setDados] = useState(DADOS_INICIAIS)
   const [itensSelecionados, setItensSelecionados] = useState({})
-  const [filtrosEstoque, setFiltrosEstoque] = useState({ material: '', nf: '', rua: '', secao: '' })
+  const [filtrosEstoque, setFiltrosEstoque] = useState(FILTROS_INICIAIS)
 
   const estoqueFiltrado = estoque.filter((item) => {
-  const material = `${item.especie || ''} ${item.classe || ''} ${item.espessura_mm || ''} ${item.largura_mm || ''} ${item.comprimento_mm || ''}`.toLowerCase()
+    const material = `${item.especie || ''} ${item.classe || ''} ${item.espessura_mm || ''} ${item.largura_mm || ''} ${item.comprimento_mm || ''}`.toLowerCase()
 
-  return (
+    return (
       material.includes(filtrosEstoque.material.toLowerCase()) &&
       String(item.recebimentos_materia_prima?.numero_nf || '').includes(filtrosEstoque.nf) &&
       String(item.rua || '').toLowerCase().includes(filtrosEstoque.rua.toLowerCase()) &&
@@ -24,17 +37,28 @@ export default function ModalOPLote({ aberto, processo,onCancelar, onSalvar, car
   useEffect(() => {
     if (!aberto || !processo) return
 
+    let ativo = true
+
+    setDados(DADOS_INICIAIS)
+    setItensSelecionados({})
+    setFiltrosEstoque(FILTROS_INICIAIS)
+    setEstoque([])
+
     async function carregarEstoque() {
       try {
         setErro('')
         const dadosEstoque = await listarEstoqueParaOPLote(processo)
-        setEstoque(dadosEstoque)
+        if (ativo) setEstoque(dadosEstoque)
       } catch (error) {
-        setErro(error.message)
+        if (ativo) setErro(error.message)
       }
     }
 
     carregarEstoque()
+
+    return () => {
+      ativo = false
+    }
   }, [aberto, processo])
 
   function alterarItem(itemId, campo, valor) {
@@ -54,16 +78,10 @@ export default function ModalOPLote({ aberto, processo,onCancelar, onSalvar, car
         const estoqueItem = estoque.find((e) => e.id === estoqueItemId)
         const quantidade = Number(item.quantidade_prevista || 0)
 
-        const volume =
-          estoqueItem?.quantidade_saldo > 0
-            ? (quantidade / Number(estoqueItem.quantidade_saldo || 1)) *
-              Number(estoqueItem.volume_saldo_m3 || 0)
-            : 0
-
         return {
           estoque_item_id: estoqueItemId,
           quantidade_prevista: quantidade,
-          volume_previsto_m3: volume
+          quantidade_disponivel: Number(estoqueItem?.quantidade_disponivel || 0)
         }
       })
       .filter((item) => item.quantidade_prevista > 0)
@@ -73,12 +91,37 @@ export default function ModalOPLote({ aberto, processo,onCancelar, onSalvar, car
       return
     }
 
+    const itemAcimaDoSaldo = itens.find(
+      (item) => item.quantidade_prevista > item.quantidade_disponivel
+    )
+
+    if (itemAcimaDoSaldo) {
+      setErro('A quantidade informada não pode ultrapassar o saldo disponível.')
+      return
+    }
+
+    if (
+      dados.dataPrevistaInicio &&
+      dados.dataPrevistaFim &&
+      new Date(dados.dataPrevistaFim) < new Date(dados.dataPrevistaInicio)
+    ) {
+      setErro('O fim previsto deve ser posterior ao início previsto.')
+      return
+    }
+
+    const posicao = dados.prioridade === '' ? null : Number(dados.prioridade)
+
+    if (posicao !== null && (!Number.isInteger(posicao) || posicao < 1)) {
+      setErro('A posição da fila deve ser um número inteiro a partir de 1.')
+      return
+    }
+
     onSalvar({
-      prioridade: dados.prioridade === '' ? null : Number(dados.prioridade),
+      prioridade: posicao === null ? null : posicao - 1,
       dataPrevistaInicio: dados.dataPrevistaInicio || null,
       dataPrevistaFim: dados.dataPrevistaFim || null,
       observacao: dados.observacao || null,
-      itens
+      itens: itens.map(({ quantidade_disponivel, ...item }) => item)
     })
   }
 
@@ -105,9 +148,12 @@ export default function ModalOPLote({ aberto, processo,onCancelar, onSalvar, car
 
           <div className="recebimento-form-grid">
             <label>
-              Prioridade
+              Posição na fila
               <input
                 type="number"
+                min="1"
+                step="1"
+                placeholder="1 = primeira posição"
                 value={dados.prioridade}
                 onChange={(e) =>
                   setDados({ ...dados, prioridade: e.target.value })
@@ -210,7 +256,7 @@ export default function ModalOPLote({ aberto, processo,onCancelar, onSalvar, car
                         alterarItem(item.id, 'selecionado', e.target.checked)
                       }
                     />
-                    <strong>{item.codigo_item}</strong>
+                    <strong>{item.codigo_pacote || item.codigo_item || '-'}</strong>
                   </label>
 
                   <div>
@@ -245,10 +291,10 @@ export default function ModalOPLote({ aberto, processo,onCancelar, onSalvar, car
                   <div>
                     <span>Disponível</span>
                     <strong>
-                      {Number(item.quantidade_saldo || 0).toFixed(0)} peças
+                      {Number(item.quantidade_disponivel || 0).toFixed(0)} peças
                     </strong>
                     <small>
-                      {Number(item.volume_saldo_m3 || 0).toFixed(4)} m³
+                      {Number(item.volume_disponivel_m3 || 0).toFixed(4)} m³
                     </small>
                   </div>
 
@@ -256,8 +302,10 @@ export default function ModalOPLote({ aberto, processo,onCancelar, onSalvar, car
                     Qtd. Peças
                     <input
                       type="number"
+                      min="1"
+                      step="1"
                       disabled={!selecionado}
-                      max={Number(item.quantidade_saldo || 0)}
+                      max={Number(item.quantidade_disponivel || 0)}
                       value={
                         itensSelecionados[item.id]?.quantidade_prevista || ''
                       }
@@ -268,25 +316,25 @@ export default function ModalOPLote({ aberto, processo,onCancelar, onSalvar, car
                           e.target.value
                         )
                       }
-                      />
-                      <small>
-                        {selecionado
-                          ? `${(
-                              (Number(itensSelecionados[item.id]?.quantidade_prevista || 0) /
-                                Number(item.quantidade_saldo || 1)) *
-                              Number(item.volume_saldo_m3 || 0)
-                            ).toFixed(4)} m³ previstos`
-                          : 'Informe a quantidade em peças'}
-                      </small>
+                    />
+                    <small>
+                      {selecionado
+                        ? `${(
+                            (Number(itensSelecionados[item.id]?.quantidade_prevista || 0) /
+                              Number(item.quantidade_disponivel || 1)) *
+                            Number(item.volume_disponivel_m3 || 0)
+                          ).toFixed(4)} m³ previstos`
+                        : 'Informe a quantidade em peças'}
+                    </small>
                   </label>
 
                 </div>
               )
             })}
 
-            {!estoque.length && (
+            {!estoqueFiltrado.length && (
               <div className="empty">
-                Nenhum item disponível para este processo.
+                Nenhum item disponível para os filtros informados.
               </div>
             )}
           </div>

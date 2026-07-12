@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { criarOPLote } from '../services/opLoteService.js'
-import { listarOPLotesPorProcesso } from '../services/opLoteService.js'
+import {
+  criarOPLote,
+  listarOPLotesPorProcesso,
+  reordenarOPLotes
+} from '../services/opLoteService.js'
 import ModalOPLote from '../components/Programacao/ModalOPLote.jsx'
 import PlannerFabrica1 from '../components/Programacao/PlannerFabrica1.jsx'
 import PlannerFabrica2 from '../components/Programacao/PlannerFabrica2.jsx'
@@ -224,8 +227,8 @@ async function carregarProcessos() {
 
     filaCompactada.splice(prioridadeDestino, 0, processoMovido)
 
-    const programados = filaCompactada.slice(0, 11)
-    const excedentes = filaCompactada.slice(11)
+    const programados = filaCompactada.slice(0, capacidadeFila)
+    const excedentes = filaCompactada.slice(capacidadeFila)
 
     for (let index = 0; index < programados.length; index++) {
         await supabase
@@ -258,7 +261,7 @@ async function carregarProcessos() {
     let destino
 
     if (prioridadeAtual === null || prioridadeAtual === undefined) {
-        if (direcao === -1) destino = 10
+        if (direcao === -1) destino = capacidadeFila - 1
         else return
     } else {
         destino = Number(prioridadeAtual) + direcao
@@ -428,34 +431,39 @@ async function carregarProcessos() {
   }
 
   async function reorganizarFilaOPLote(opMovida, prioridadeDestino) {
-    const filaAtual = opLotes
-      .filter((op) => op.id !== opMovida.id)
-      .sort((a, b) => Number(a.prioridade ?? 999) - Number(b.prioridade ?? 999))
+    try {
+      setErro('')
 
-    const novaFila = [...filaAtual]
-    novaFila.splice(prioridadeDestino, 0, opMovida)
+      const filaAtual = opLotes
+        .filter((op) => op.id !== opMovida.id)
+        .sort((a, b) => Number(a.prioridade ?? 999) - Number(b.prioridade ?? 999))
 
-    for (let index = 0; index < novaFila.length; index++) {
-      const { error } = await supabase
-        .from('op_lotes')
-        .update({ prioridade: index })
-        .eq('id', novaFila[index].id)
+      const novaFila = [...filaAtual]
+      novaFila.splice(prioridadeDestino, 0, opMovida)
 
-      if (error) {
-        setErro(error.message)
-        return
-      }
+      await reordenarOPLotes(
+        setorAtual,
+        novaFila.map((op) => op.id)
+      )
+
+      await carregarProcessos()
+    } catch (error) {
+      setErro(error.message)
+    } finally {
+      setLinhaArrastada(null)
+      setLinhaSobre(null)
     }
-
-    await carregarProcessos()
   }
 
   async function moverPrioridadeOPLote(opLote, direcao) {
-    const prioridadeAtual = Number(opLote.prioridade ?? 0)
-    const destino = prioridadeAtual + direcao
+    const filaOrdenada = [...opLotes].sort(
+      (a, b) => Number(a.prioridade ?? 999) - Number(b.prioridade ?? 999)
+    )
+    const indiceAtual = filaOrdenada.findIndex((op) => op.id === opLote.id)
+    const destino = indiceAtual + direcao
 
     if (destino < 0) return
-    if (destino >= opLotes.length) return
+    if (destino >= filaOrdenada.length) return
 
     await reorganizarFilaOPLote(opLote, destino)
   }
