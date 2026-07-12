@@ -11,6 +11,7 @@ import CargaMaquina from './pages/CargaMaquina.jsx'
 import Producao from './pages/Producao.jsx'
 import Recebimentos from './pages/Recebimentos.jsx'
 import EstoqueMateriais from './pages/EstoqueMateriais.jsx'
+import ConfiguracoesCapacidade from './pages/ConfiguracoesCapacidade.jsx'
 
 function App() {
 
@@ -69,6 +70,9 @@ function App() {
 
     case 'estoque-materiais':
       return <EstoqueMateriais />
+
+    case 'configuracoes-capacidade':
+      return <ConfiguracoesCapacidade />
 
     default:
       return <Dashboard />
@@ -201,7 +205,10 @@ function App() {
             Indicadores
           </button>
 
-          <button className="menu-item">
+          <button
+            className={`menu-item ${paginaAtual === 'configuracoes-capacidade' ? 'active' : ''}`}
+            onClick={() => setPaginaAtual('configuracoes-capacidade')}
+          >
             <Settings size={18} />
             Configurações
           </button>

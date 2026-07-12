@@ -3717,3 +3717,176 @@ td {
   color: var(--urbem-green);
   font-size: 20px;
 }
+
+/* ==================================================
+   CONFIGURAÇÕES DE CAPACIDADE
+================================================== */
+.capacity-page {
+  display: grid;
+  gap: 22px;
+}
+
+.capacity-success {
+  padding: 13px 16px;
+  border: 1px solid #86d5b1;
+  border-radius: 14px;
+  background: #effcf5;
+  color: #17653f;
+  font-weight: 800;
+}
+
+.capacity-resource-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.capacity-resource-card {
+  display: grid;
+  gap: 6px;
+  min-height: 150px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: #fff;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.capacity-resource-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(20, 85, 80, .45);
+}
+
+.capacity-resource-card.active {
+  border-color: var(--urbem-green);
+  box-shadow: 0 14px 32px rgba(20, 85, 80, .14);
+}
+
+.capacity-resource-card span,
+.capacity-resource-card small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.capacity-resource-card strong {
+  color: var(--urbem-green);
+  font-size: 20px;
+}
+
+.capacity-resource-card em {
+  align-self: end;
+  color: var(--urbem-green);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.capacity-config-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.capacity-panel {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: #fff;
+}
+
+.capacity-panel-title {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  color: var(--urbem-green);
+}
+
+.capacity-panel-title h3 {
+  margin: 0;
+}
+
+.capacity-panel-title span {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.capacity-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.capacity-panel label {
+  display: grid;
+  gap: 6px;
+  color: var(--urbem-green);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.capacity-panel input,
+.capacity-panel select,
+.capacity-panel textarea {
+  width: 100%;
+}
+
+.capacity-calendar-list {
+  display: grid;
+  gap: 8px;
+}
+
+.capacity-calendar-row {
+  display: grid;
+  grid-template-columns: 130px repeat(4, minmax(80px, 1fr));
+  gap: 8px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #f8fbfb;
+}
+
+.capacity-calendar-row.inactive {
+  opacity: .55;
+}
+
+.capacity-day-check {
+  display: flex !important;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 8px !important;
+}
+
+.capacity-day-check input {
+  width: auto;
+}
+
+@media (max-width: 1100px) {
+  .capacity-resource-grid {
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+  }
+
+  .capacity-config-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .capacity-resource-grid,
+  .capacity-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .capacity-calendar-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
