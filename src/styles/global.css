@@ -2107,6 +2107,68 @@ td {
    CARGA MÁQUINA
    Programação por setor produtivo e prioridade
 ================================================== */
+.op-lote-modal {
+  width: min(1280px, 94vw);
+  max-height: 90vh;
+  overflow: auto;
+}
+
+.op-lote-estoque-item {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 160px 1.1fr 1.2fr 1.2fr 0.9fr 180px;
+  gap: 14px;
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px;
+}
+
+.op-lote-estoque-item label input {
+  width: 100%;
+}
+
+.op-lote-filter-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 0.8fr 0.6fr 0.6fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.op-lote-filter-grid input {
+  width: 100%;
+}
+
+.op-lote-estoque-item.selecionado {
+  border-color: var(--urbem-green);
+  background: #f0fdf9;
+}
+
+.op-lote-estoque-item span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.op-lote-estoque-item strong {
+  color: var(--urbem-green);
+}
+
+.op-lote-estoque-item small {
+  display: block;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.op-lote-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
 .machine-sector-tabs {
   display: flex;
@@ -2269,6 +2331,164 @@ td {
     grid-template-columns: 1fr;
   }
 }
+
+.machine-factory-tabs {
+  display: grid;
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.machine-factory-group {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 18px;
+}
+
+.machine-factory-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.machine-factory-title strong {
+  color: var(--urbem-green);
+  font-size: 16px;
+}
+
+.machine-factory-title span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.machine-overview-panel {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 26px;
+  padding: 22px;
+  margin-bottom: 24px;
+  box-shadow: 0 12px 32px rgba(20, 85, 80, 0.08);
+}
+
+.machine-overview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.machine-overview-header span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.machine-overview-header h3 {
+  margin: 4px 0 0;
+  color: var(--urbem-green);
+}
+
+.machine-overview-header small {
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.machine-factory-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.machine-factory-card {
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: #f7fbfb;
+  padding: 22px;
+  text-align: left;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.machine-factory-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(20, 85, 80, 0.35);
+}
+
+.machine-factory-card.active {
+  background: var(--urbem-green);
+  color: var(--urbem-yellow);
+  border-color: var(--urbem-green);
+  box-shadow: 0 16px 34px rgba(20, 85, 80, 0.22);
+}
+
+.machine-factory-card span {
+  display: block;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: inherit;
+  opacity: 0.75;
+}
+
+.machine-factory-card strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 26px;
+}
+
+.machine-factory-card small {
+  display: block;
+  margin-top: 10px;
+  color: inherit;
+  opacity: 0.8;
+}
+
+.machine-sector-tabs.planner-style {
+  margin-bottom: 0;
+  padding-top: 4px;
+}
+
+.machine-lote-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: -6px 0 18px;
+}
+
+
+/* ==================================================
+   AJSUTE TABELA DE SEQUENCIAMENTO DE PRODUÇÃO CARGA MÁQUINA FABRICA 1
+================================================== */
+.drag-handle-cell {
+  width: 36px;
+  text-align: center;
+  cursor: grab;
+  color: var(--muted);
+  transition: .2s;
+}
+
+.drag-handle-cell:hover {
+  color: var(--urbem-green);
+}
+
+.drag-handle-cell:active {
+  cursor: grabbing;
+}
+
+.drag-over {
+  background: rgba(39, 174, 96, .08);
+}
+
+.dragging {
+  opacity: .45;
+}
+
 
 /* ==================================================
    FIX FINAL - MASTER 360

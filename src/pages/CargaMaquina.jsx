@@ -1,89 +1,124 @@
 import { useEffect, useState } from 'react'
-import { RefreshCw, ArrowUp, ArrowDown } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { criarOPLote } from '../services/opLoteService.js'
+import { listarOPLotesPorProcesso } from '../services/opLoteService.js'
+import ModalOPLote from '../components/Programacao/ModalOPLote.jsx'
+import PlannerFabrica1 from '../components/Programacao/PlannerFabrica1.jsx'
+import PlannerFabrica2 from '../components/Programacao/PlannerFabrica2.jsx'
 
-const setores = [
-  { id: 'AUTOCLAVE', label: 'Autoclave' },
-  { id: 'GRADEADOR', label: 'Gradeador' },
-  { id: 'ESTUFA', label: 'Estufa' },
-  { id: 'CLASSIFICADORA', label: 'Classificadora' },
-  { id: 'OTIMIZADORA/FINGER', label: 'Otimizadora / Finger' },
-  { id: 'PLAINA', label: 'Plainas' },
-  { id: 'PRENSA', label: 'Prensas' },
-  { id: 'DESTOPADEIRA', label: 'Destopadeira' },
-  { id: 'CNC', label: 'CNC' },
-  { id: 'ACABAMENTO', label: 'Acabamento' }
+const setoresFabrica1 = [
+  { id: 'AUTOCLAVE', label: 'Autoclave', fabrica: 1, tipoOP: 'lote' },
+  { id: 'GRADEADOR', label: 'Gradeador', fabrica: 1, tipoOP: 'lote' },
+  { id: 'ESTUFA', label: 'Estufa', fabrica: 1, tipoOP: 'lote' },
+  { id: 'CLASSIFICADORA', label: 'Classificadora', fabrica: 1, tipoOP: 'lote' }
 ]
 
-const statusPCP = [
-  'Aguardando programação',
-  'Aguardando matéria-prima',
-  'Aguardando manutenção',
-  'Aguardando qualidade',
-  'Em produção',
-  'Em pausa',
-  'Concluído'
+const setoresFabrica2 = [
+  { id: 'OTIMIZADORA/FINGER', label: 'Otimizadora / Finger', fabrica: 2, tipoOP: 'projeto' },
+  { id: 'PLAINA', label: 'Plainas', fabrica: 2, tipoOP: 'projeto' },
+  { id: 'PRENSA', label: 'Prensas', fabrica: 2, tipoOP: 'projeto' },
+  { id: 'DESTOPADEIRA', label: 'Destopadeira', fabrica: 2, tipoOP: 'projeto' },
+  { id: 'CNC', label: 'CNC', fabrica: 2, tipoOP: 'projeto' },
+  { id: 'ACABAMENTO', label: 'Acabamento', fabrica: 2, tipoOP: 'projeto' }
 ]
+
+const setores = [...setoresFabrica1, ...setoresFabrica2]
+
+const capacidadeFilaSetor = {
+  AUTOCLAVE: 11, GRADEADOR: 11, ESTUFA: 11, CLASSIFICADORA: 11,
+
+  'OTIMIZADORA/FINGER': 21, PLAINA: 21, PRENSA: 21,
+
+  DESTOPADEIRA: 31, CNC: 31, ACABAMENTO: 31
+}
+
 
 export default function CargaMaquina() {
   const [setorAtual, setSetorAtual] = useState('AUTOCLAVE')
+  const [fabricaAtual, setFabricaAtual] = useState(1)
   const [processos, setProcessos] = useState([])
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState('')
   const [linhaArrastada, setLinhaArrastada] = useState(null)
   const [linhaSobre, setLinhaSobre] = useState(null)
+  const [opLotes, setOpLotes] = useState([])
+  const [modalOPLoteAberto, setModalOPLoteAberto] = useState(false)
+  const [salvandoOPLote, setSalvandoOPLote] = useState(false)
 
-  async function carregarProcessos() {
-    try {
-      setCarregando(true)
-      setErro('')
+  const setoresDaFabrica = fabricaAtual === 1 ? setoresFabrica1 : setoresFabrica2
 
-      const { data, error } = await supabase
-        .from('op_processos')
-        .select(`
-          *,
-          ordens_producao (
-            id,
-            numero_op,
-            status,
-            volume_m3,
-            itens_projeto (
-              codigo_interno_item,
-              tipo_material,
-              base_mm,
-              altura_mm,
-              comprimento_mm,
-              carregamentos_projeto (
-                numero_carregamento,
-                data_prevista
-              ),
-              projetos (
-                codigo_interno,
-                nome_projeto,
-                cliente
-              )
+  const setorSelecionado = setores.find((setor) => setor.id === setorAtual)
+  const ehFabrica1 = setorSelecionado?.fabrica === 1
+
+  const capacidadeFila = capacidadeFilaSetor[setorAtual] || 11
+  
+
+async function carregarProcessos() {
+  try {
+    setCarregando(true)
+    setErro('')
+
+    if (ehFabrica1) {
+      const lotes = await listarOPLotesPorProcesso(setorAtual)
+      setOpLotes(lotes)
+      setProcessos([])
+      return
+    }
+
+    setOpLotes([])
+
+    const { data, error } = await supabase
+      .from('op_processos')
+      .select(`
+        *,
+        ordens_producao (
+          id,
+          numero_op,
+          status,
+          volume_m3,
+          itens_projeto (
+            codigo_interno_item,
+            tipo_material,
+            base_mm,
+            altura_mm,
+            comprimento_mm,
+            carregamentos_projeto (
+              numero_carregamento,
+              data_prevista
+            ),
+            projetos (
+              codigo_interno,
+              nome_projeto,
+              cliente
             )
           )
-        `)
-        .eq('ativo', true)
-        .eq('liberado_programacao', true)
-        .in('status', ['Liberado para programação', 'Programado', 'Em produção', 'Em pausa'])
-        .order('prioridade', { ascending: true, nullsFirst: true })
-        .order('ordem_fila', { ascending: true, nullsFirst: true })
+        )
+      `)
+      .eq('ativo', true)
+      .eq('liberado_programacao', true)
+      .in('status', [
+        'Liberado para programação',
+        'Programado',
+        'Em produção',
+        'Em pausa'
+      ])
+      .order('prioridade', { ascending: true, nullsFirst: true })
+      .order('ordem_fila', { ascending: true, nullsFirst: true })
 
-      if (error) throw error
+    if (error) throw error
 
-      setProcessos(data || [])
-    } catch (error) {
-      setErro(error.message)
-    } finally {
-      setCarregando(false)
-    }
+    setProcessos(data || [])
+  } catch (error) {
+    setErro(error.message)
+  } finally {
+    setCarregando(false)
   }
+}
 
   useEffect(() => {
     carregarProcessos()
-  }, [])
+}, [setorAtual, fabricaAtual])
 
   const processosDoSetor = processos
     .filter((processo) => processo.processo === setorAtual || processo.recurso === setorAtual )
@@ -94,22 +129,51 @@ export default function CargaMaquina() {
         return prioridadeA - prioridadeB
     })
 
-  const kpis = {
-    total: processosDoSetor.length,
-    semProgramar: processosDoSetor.filter((p) => p.prioridade === null).length,
-    atrasados: 0,
-    volumeTotal: processosDoSetor.reduce(
-      (total, p) => total + Number(p.ordens_producao?.volume_m3 || 0),
-      0
-    ),
-    volumeSemProgramar: processosDoSetor
-      .filter((p) => p.prioridade === null)
-      .reduce((total, p) => total + Number(p.ordens_producao?.volume_m3 || 0), 0),
-    projetos: new Set(
-      processosDoSetor.map(
-        (p) => p.ordens_producao?.itens_projeto?.projetos?.codigo_interno
-      )
-    ).size
+  const kpis = ehFabrica1
+    ? {
+        total: opLotes.length,
+        semProgramar: opLotes.filter(op => op.prioridade == null).length,
+
+        volumeTotal: opLotes.reduce(
+          (t, op) =>
+            t +
+            (op.op_lote_itens || []).reduce(
+              (v, i) => v + Number(i.volume_previsto_m3 || 0),
+              0
+            ),
+          0
+        ),
+
+        volumeSemProgramar: opLotes
+          .filter(op => op.prioridade == null)
+          .reduce(
+            (t, op) =>
+              t +
+              (op.op_lote_itens || []).reduce(
+                (v, i) => v + Number(i.volume_previsto_m3 || 0),
+                0
+              ),
+            0
+          ),
+
+        projetos: 0
+      }
+    : {
+      total: processosDoSetor.length,
+      semProgramar: processosDoSetor.filter((p) => p.prioridade === null).length,
+      atrasados: 0,
+      volumeTotal: processosDoSetor.reduce(
+        (total, p) => total + Number(p.ordens_producao?.volume_m3 || 0),
+        0
+      ),
+      volumeSemProgramar: processosDoSetor
+        .filter((p) => p.prioridade === null)
+        .reduce((total, p) => total + Number(p.ordens_producao?.volume_m3 || 0), 0),
+      projetos: new Set(
+        processosDoSetor.map(
+          (p) => p.ordens_producao?.itens_projeto?.projetos?.codigo_interno
+        )
+      ).size
   }
 
   async function atualizarProcesso(processoId, campos) {
@@ -202,7 +266,7 @@ export default function CargaMaquina() {
 
     if (destino < 0) return
 
-    if (destino > 10) {
+    if (destino >= capacidadeFila) {
         await atualizarProcesso(processo.id, {
         prioridade: null,
         status: 'Liberado para programação'
@@ -236,39 +300,10 @@ export default function CargaMaquina() {
 
   const prioridadeDestino =
     processoAlvo.prioridade === null || processoAlvo.prioridade === undefined
-      ? 10
+      ? capacidadeFila - 1
       : Number(processoAlvo.prioridade)
 
     await reorganizarFila(linhaArrastada, prioridadeDestino)
-    }
-
-    async function soltarNaPosicao(event, prioridadeDestino) {
-    event.preventDefault()
-
-    if (!linhaArrastada) return
-
-    await reorganizarFila(linhaArrastada, prioridadeDestino)
-    }
-
-    function finalizarArraste() {
-        setLinhaArrastada(null)
-        setLinhaSobre(null)
-        }
-
-    const posicoesFila = Array.from({ length: 11 }, (_, index) => index)
-
-    const processosProgramados = processosDoSetor.filter(
-    (processo) => processo.prioridade !== null && processo.prioridade !== undefined
-    )
-
-    const processosSemPrioridade = processosDoSetor.filter(
-    (processo) => processo.prioridade === null || processo.prioridade === undefined
-    )
-
-    function obterProcessoNaPrioridade(prioridade) {
-    return processosProgramados.find(
-        (processo) => Number(processo.prioridade) === Number(prioridade)
-    )
     }
 
     async function soltarNaPosicao(event, prioridadeDestino) {
@@ -288,12 +323,12 @@ export default function CargaMaquina() {
             .sort((a, b) => Number(a.prioridade) - Number(b.prioridade))
 
         // Monta uma fila fixa de 0 a 10
-        const novaFila = Array(11).fill(null)
+        const novaFila = Array(capacidadeFila).fill(null)
 
         filaAtual.forEach((processo) => {
             const posicao = Number(processo.prioridade)
 
-            if (posicao >= 0 && posicao <= 10) {
+            if (posicao >= 0 && posicao < capacidadeFila) {
             novaFila[posicao] = processo
             }
         })
@@ -305,8 +340,8 @@ export default function CargaMaquina() {
         filaCompactada.splice(prioridadeDestino, 0, linhaArrastada)
 
         // Limita de 0 a 10
-        const programados = filaCompactada.slice(0, 11)
-        const excedentes = filaCompactada.slice(11)
+        const programados = filaCompactada.slice(0, capacidadeFila)
+        const excedentes = filaCompactada.slice(capacidadeFila)
 
         // Atualiza programados
         for (let index = 0; index < programados.length; index++) {
@@ -328,118 +363,105 @@ export default function CargaMaquina() {
                 status: 'Liberado para programação'
             })
             .eq('id', processo.id)
-    }
-
-    setLinhaArrastada(null)
-    setLinhaSobre(null)
-    carregarProcessos()
-    }
-
-    function renderLinhaProcesso(processo, semPrioridade = false) {
-        const op = processo.ordens_producao
-        const item = op?.itens_projeto
-        const projeto = item?.projetos
-        const carregamento = item?.carregamentos_projeto
-
-        return (
-            <tr
-            key={processo.id}
-            className={`
-                machine-draggable-row
-                ${linhaArrastada?.id === processo.id ? 'dragging' : ''}
-                ${linhaSobre === processo.id ? 'drag-over' : ''}
-            `}
-            draggable
-            onDragStart={(e) => iniciarArrasteLinha(e, processo)}
-            onDragOver={(e) => passarSobreLinha(e, processo)}
-            onDragLeave={() => setLinhaSobre(null)}
-            onDrop={(e) => soltarLinha(e, processo)}
-            onDragEnd={finalizarArraste}
-            >
-            <td className="priority-cell">
-                {semPrioridade ? '-' : processo.prioridade}
-            </td>
-
-            <td>
-                <strong>{op?.numero_op || '-'}</strong>
-            </td>
-
-            <td>
-                <strong>{projeto?.codigo_interno || '-'}</strong>
-                <br />
-                <small>{projeto?.nome_projeto || '-'}</small>
-            </td>
-
-            <td>{carregamento?.data_prevista || '-'}</td>
-
-            <td>
-                <input
-                type="datetime-local"
-                value={
-                    processo.data_prevista_inicio
-                    ? processo.data_prevista_inicio.slice(0, 16)
-                    : ''
-                }
-                onChange={(e) => alterarDataInicio(processo.id, e.target.value)}
-                />
-            </td>
-
-            <td>
-                {processo.data_prevista_fim
-                ? processo.data_prevista_fim.slice(0, 16).replace('T', ' ')
-                : '-'}
-            </td>
-
-            <td>
-                <select
-                value={processo.status_pcp || 'Aguardando programação'}
-                onChange={(e) => alterarStatusPCP(processo.id, e.target.value)}
-                >
-                {statusPCP.map((status) => (
-                    <option key={status} value={status}>
-                    {status}
-                    </option>
-                ))}
-                </select>
-            </td>
-
-            <td>
-                <strong>{item?.codigo_interno_item || '-'}</strong>
-                <br />
-                <small>
-                {item?.tipo_material || '-'} • {item?.base_mm || '-'} x {item?.altura_mm || '-'} x {item?.comprimento_mm || '-'}
-                </small>
-            </td>
-
-            <td>{Number(op?.volume_m3 || 0).toFixed(2)}</td>
-
-            <td>
-                <div className="table-actions">
-                <button
-                    type="button"
-                    className="table-icon-action"
-                    onClick={() => moverPrioridade(processo, -1)}
-                    title="Subir na fila"
-                >
-                    <ArrowUp size={15} />
-                </button>
-
-                <button
-                    type="button"
-                    className="table-icon-action"
-                    onClick={() => moverPrioridade(processo, 1)}
-                    title="Descer na fila"
-                >
-                    <ArrowDown size={15} />
-                </button>
-                </div>
-            </td>
-            </tr>
-        )
+          }
+          
+          setLinhaArrastada(null)
+          setLinhaSobre(null)
+          carregarProcessos()
         }
 
-  return (
-    <div className="page">
+    async function salvarOPLote(dados) {
+      try {
+        setSalvandoOPLote(true)
+        setErro('')
+
+        await criarOPLote({
+          processo: setorAtual,
+          prioridade: dados.prioridade,
+          dataPrevistaInicio: dados.dataPrevistaInicio,
+          dataPrevistaFim: dados.dataPrevistaFim,
+          observacao: dados.observacao,
+          itens: dados.itens
+        })
+
+        setModalOPLoteAberto(false)
+        await carregarProcessos()
+      } catch (error) {
+        setErro(error.message)
+      } finally {
+        setSalvandoOPLote(false)
+      }
+    }
+      
+    function selecionarFabrica(fabrica) {
+        setFabricaAtual(fabrica)
+    
+        if (fabrica === 1) {
+          setSetorAtual('AUTOCLAVE')
+        } else {
+          setSetorAtual('OTIMIZADORA/FINGER')
+        }
+      }
+  
+  function finalizarArraste() {
+    setLinhaArrastada(null)
+    setLinhaSobre(null)
+  }
+
+  const posicoesFila = Array.from(
+    { length: capacidadeFila },
+    (_, index) => index
+  )
+
+  const processosProgramados = processosDoSetor.filter(
+    (processo) => processo.prioridade !== null && processo.prioridade !== undefined
+  )
+
+  const processosSemPrioridade = processosDoSetor.filter(
+    (processo) => processo.prioridade === null || processo.prioridade === undefined
+  )
+
+  function obterProcessoNaPrioridade(prioridade) {
+    return processosProgramados.find(
+      (processo) => Number(processo.prioridade) === Number(prioridade)
+    )
+  }
+
+  async function reorganizarFilaOPLote(opMovida, prioridadeDestino) {
+    const filaAtual = opLotes
+      .filter((op) => op.id !== opMovida.id)
+      .sort((a, b) => Number(a.prioridade ?? 999) - Number(b.prioridade ?? 999))
+
+    const novaFila = [...filaAtual]
+    novaFila.splice(prioridadeDestino, 0, opMovida)
+
+    for (let index = 0; index < novaFila.length; index++) {
+      const { error } = await supabase
+        .from('op_lotes')
+        .update({ prioridade: index })
+        .eq('id', novaFila[index].id)
+
+      if (error) {
+        setErro(error.message)
+        return
+      }
+    }
+
+    await carregarProcessos()
+  }
+
+  async function moverPrioridadeOPLote(opLote, direcao) {
+    const prioridadeAtual = Number(opLote.prioridade ?? 0)
+    const destino = prioridadeAtual + direcao
+
+    if (destino < 0) return
+    if (destino >= opLotes.length) return
+
+    await reorganizarFilaOPLote(opLote, destino)
+  }
+      
+      return (
+        <div className="page">
       <header className="page-header">
         <div>
           <p className="eyebrow">Programação</p>
@@ -455,19 +477,66 @@ export default function CargaMaquina() {
 
       {erro && <div className="alert">{erro}</div>}
 
-      <section className="machine-sector-tabs">
-        {setores.map((setor) => (
-          <button
-            key={setor.id}
-            type="button"
-            className={`machine-sector-tab ${setorAtual === setor.id ? 'active' : ''}`}
-            onClick={() => setSetorAtual(setor.id)}
-          >
-            {setor.label}
-          </button>
-        ))}
-      </section>
+      <section className="machine-overview-panel">
+        <div className="machine-overview-header">
+          <div>
+            <span>Visão Geral</span>
+            <h3>Carga Máquina</h3>
+          </div>
 
+          <small>
+            {fabricaAtual === 1
+              ? 'Fábrica 1 · OPs por lote e estoque'
+              : 'Fábrica 2 · OPs por projeto e processo'}
+          </small>
+        </div>
+
+        <div className="machine-factory-card-grid">
+          <button
+            type="button"
+            className={`machine-factory-card ${fabricaAtual === 1 ? 'active' : ''}`}
+            onClick={() => selecionarFabrica(1)}
+          >
+            <span>Produção primária</span>
+            <strong>Fábrica 1</strong>
+            <small>Autoclave, Gradeador, Estufa e Classificadora</small>
+          </button>
+
+          <button
+            type="button"
+            className={`machine-factory-card ${fabricaAtual === 2 ? 'active' : ''}`}
+            onClick={() => selecionarFabrica(2)}
+          >
+            <span>Produção por projeto</span>
+            <strong>Fábrica 2</strong>
+            <small>Otimizadora, Plainas, Prensas, CNC e Acabamento</small>
+          </button>
+        </div>
+
+        <div className="machine-sector-tabs planner-style">
+          {setoresDaFabrica.map((setor) => (
+            <button
+              key={setor.id}
+              type="button"
+              className={`machine-sector-tab ${setorAtual === setor.id ? 'active' : ''}`}
+              onClick={() => setSetorAtual(setor.id)}
+            >
+              {setor.label}
+            </button>
+          ))}
+        </div>
+      </section>
+      {ehFabrica1 && (
+        <div className="machine-lote-actions">
+          <button
+            type="button"
+            className="btn primary"
+            onClick={() => setModalOPLoteAberto(true)}
+          >
+            + Nova OP de Lote
+          </button>
+        </div>
+      )}
       <section className="itens-kpi-grid">
         <div className="kpi-card">
           <span>Itens no setor</span>
@@ -493,71 +562,45 @@ export default function CargaMaquina() {
           <small>com itens no setor</small>
         </div>
       </section>
+      {ehFabrica1 ? (
+        <PlannerFabrica1
+          opLotes={opLotes}
+          linhaArrastada={linhaArrastada}
+          linhaSobre={linhaSobre}
+          setLinhaArrastada={setLinhaArrastada}
+          setLinhaSobre={setLinhaSobre}
+          reorganizarFilaOPLote={reorganizarFilaOPLote}
+          moverPrioridadeOPLote={moverPrioridadeOPLote}
+        />
+      ) : (
+        <PlannerFabrica2
+          posicoesFila={posicoesFila}
+          processosSemPrioridade={processosSemPrioridade}
+          processosDoSetor={processosDoSetor}
+          obterProcessoNaPrioridade={obterProcessoNaPrioridade}
+          linhaArrastada={linhaArrastada}
+          linhaSobre={linhaSobre}
+          setLinhaSobre={setLinhaSobre}
+          iniciarArrasteLinha={iniciarArrasteLinha}
+          passarSobreLinha={passarSobreLinha}
+          soltarLinha={soltarLinha}
+          soltarNaPosicao={soltarNaPosicao}
+          finalizarArraste={finalizarArraste}
+          alterarDataInicio={alterarDataInicio}
+          alterarStatusPCP={alterarStatusPCP}
+          moverPrioridade={moverPrioridade}
+        />
+      )}
 
-      <section className="table-card">
-        <div className="table-wrapper">
-          <table className="machine-table">
-            <thead>
-                <tr>
-                    <th>Prioridade</th>
-                    <th>O.P</th>
-                    <th>Projeto</th>
-                    <th>Prazo entrega</th>
-                    <th>Entrada em máquina</th>
-                    <th>Previsão término</th>
-                    <th>Status PCP</th>
-                    <th>Item</th>
-                    <th>M³</th>
-                    <th>Ordem</th>
-                </tr>
-            </thead>
+          <ModalOPLote
+            aberto={modalOPLoteAberto}
+            processo={setorAtual}
+            onCancelar={() => setModalOPLoteAberto(false)}
+            onSalvar={salvarOPLote}
+            carregando={salvandoOPLote}
+          />
 
-            <tbody>
-            {posicoesFila.map((posicao) => {
-                const processo = obterProcessoNaPrioridade(posicao)
-
-                if (!processo) {
-                return (
-                    <tr key={`vazio-${posicao}`} className={`machine-empty-row ${linhaSobre === `vazio-${posicao}` ? 'drag-over' : ''}`} onDragOver={(event) => event.preventDefault()} 
-                        onDragEnter={(event) => {
-                        event.preventDefault()
-                        setLinhaSobre(`vazio-${posicao}`)
-                    }}
-                    onDragLeave={() => setLinhaSobre(null)}
-                    onDrop={(event) => soltarNaPosicao(event, posicao)}
-                    >
-                    <td className="priority-cell">{posicao}</td>
-                    <td colSpan="9" className="empty">
-                        Sem OP programada nesta posição.
-                    </td>
-                    </tr>
-                )
-                }
-
-                return renderLinhaProcesso(processo)
-            })}
-
-            {processosSemPrioridade.length > 0 && (
-                <tr className="machine-section-row">
-                <td colSpan="10">Aguardando programação</td>
-                </tr>
-            )}
-
-            {processosSemPrioridade.map((processo) =>
-                renderLinhaProcesso(processo, true)
-            )}
-
-            {!processosDoSetor.length && (
-                <tr>
-                <td colSpan="10" className="empty">
-                    Nenhum processo liberado para este setor.
-                </td>
-                </tr>
-            )}
-            </tbody>
-          </table>
         </div>
-        </section>
-    </div>
+
   )
 }
