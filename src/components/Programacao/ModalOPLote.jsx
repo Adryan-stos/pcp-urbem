@@ -10,6 +10,11 @@ const DADOS_INICIAIS = {
 
 const FILTROS_INICIAIS = { material: '', nf: '', rua: '', secao: '' }
 
+function formatarDataLocal(data) {
+  const deslocamento = data.getTimezoneOffset() * 60000
+  return new Date(data.getTime() - deslocamento).toISOString().slice(0, 16)
+}
+
 export default function ModalOPLote({
   aberto,
   processo,
@@ -22,6 +27,7 @@ export default function ModalOPLote({
   const [dados, setDados] = useState(DADOS_INICIAIS)
   const [itensSelecionados, setItensSelecionados] = useState({})
   const [filtrosEstoque, setFiltrosEstoque] = useState(FILTROS_INICIAIS)
+  const dataMinima = formatarDataLocal(new Date())
 
   const estoqueFiltrado = estoque.filter((item) => {
     const material = `${item.especie || ''} ${item.classe || ''} ${item.espessura_mm || ''} ${item.largura_mm || ''} ${item.comprimento_mm || ''}`.toLowerCase()
@@ -71,6 +77,65 @@ export default function ModalOPLote({
     }))
   }
 
+  function alterarPosicao(valor) {
+    if (valor === '') {
+      setDados((atuais) => ({ ...atuais, prioridade: '' }))
+      return
+    }
+
+    if (!/^\d+$/.test(valor) || Number(valor) < 1) {
+      setErro('A posição da fila deve ser um número inteiro a partir de 1.')
+      return
+    }
+
+    setErro('')
+    setDados((atuais) => ({ ...atuais, prioridade: valor }))
+  }
+
+  function alterarQuantidade(item, valor) {
+    if (valor === '') {
+      alterarItem(item.id, 'quantidade_prevista', '')
+      return
+    }
+
+    if (!/^\d+$/.test(valor) || Number(valor) < 1) {
+      setErro('A quantidade deve ser um número inteiro maior que zero.')
+      return
+    }
+
+    const quantidade = Number(valor)
+    const disponivel = Number(item.quantidade_disponivel || 0)
+
+    if (quantidade > disponivel) {
+      setErro(`Quantidade máxima disponível: ${disponivel.toFixed(0)} peças.`)
+      alterarItem(item.id, 'quantidade_prevista', String(disponivel))
+      return
+    }
+
+    setErro('')
+    alterarItem(item.id, 'quantidade_prevista', valor)
+  }
+
+  function alterarData(campo, valor) {
+    if (valor && valor < dataMinima) {
+      setErro('A data e a hora não podem ser anteriores ao momento atual.')
+      return
+    }
+
+    if (
+      campo === 'dataPrevistaFim' &&
+      valor &&
+      dados.dataPrevistaInicio &&
+      valor < dados.dataPrevistaInicio
+    ) {
+      setErro('O fim previsto deve ser posterior ao início previsto.')
+      return
+    }
+
+    setErro('')
+    setDados((atuais) => ({ ...atuais, [campo]: valor }))
+  }
+
   function confirmar() {
     const itens = Object.entries(itensSelecionados)
       .filter(([, item]) => item.selecionado)
@@ -91,12 +156,31 @@ export default function ModalOPLote({
       return
     }
 
+    const itemInvalido = itens.find(
+      (item) =>
+        !Number.isInteger(item.quantidade_prevista) ||
+        item.quantidade_prevista < 1
+    )
+
+    if (itemInvalido) {
+      setErro('Todas as quantidades devem ser números inteiros maiores que zero.')
+      return
+    }
+
     const itemAcimaDoSaldo = itens.find(
       (item) => item.quantidade_prevista > item.quantidade_disponivel
     )
 
     if (itemAcimaDoSaldo) {
       setErro('A quantidade informada não pode ultrapassar o saldo disponível.')
+      return
+    }
+
+    if (
+      (dados.dataPrevistaInicio && dados.dataPrevistaInicio < dataMinima) ||
+      (dados.dataPrevistaFim && dados.dataPrevistaFim < dataMinima)
+    ) {
+      setErro('A data e a hora não podem ser anteriores ao momento atual.')
       return
     }
 
@@ -155,9 +239,12 @@ export default function ModalOPLote({
                 step="1"
                 placeholder="1 = primeira posição"
                 value={dados.prioridade}
-                onChange={(e) =>
-                  setDados({ ...dados, prioridade: e.target.value })
-                }
+                onKeyDown={(e) => {
+                  if (['-', '+', 'e', 'E', '.', ','].includes(e.key)) {
+                    e.preventDefault()
+                  }
+                }}
+                onChange={(e) => alterarPosicao(e.target.value)}
               />
             </label>
 
@@ -165,10 +252,9 @@ export default function ModalOPLote({
               Início previsto
               <input
                 type="datetime-local"
+                min={dataMinima}
                 value={dados.dataPrevistaInicio}
-                onChange={(e) =>
-                  setDados({ ...dados, dataPrevistaInicio: e.target.value })
-                }
+                onChange={(e) => alterarData('dataPrevistaInicio', e.target.value)}
               />
             </label>
 
@@ -176,10 +262,9 @@ export default function ModalOPLote({
               Fim previsto
               <input
                 type="datetime-local"
+                min={dados.dataPrevistaInicio || dataMinima}
                 value={dados.dataPrevistaFim}
-                onChange={(e) =>
-                  setDados({ ...dados, dataPrevistaFim: e.target.value })
-                }
+                onChange={(e) => alterarData('dataPrevistaFim', e.target.value)}
               />
             </label>
 
@@ -204,37 +289,49 @@ export default function ModalOPLote({
           </div>
           
           <div className="op-lote-filter-grid">
-            <input
-              placeholder="Material / dimensão"
-              value={filtrosEstoque.material}
-              onChange={(e) =>
-                setFiltrosEstoque({ ...filtrosEstoque, material: e.target.value })
-              }
-            />
+            <label>
+              Material / dimensão
+              <input
+                placeholder="Ex.: Pinus 38 x 125"
+                value={filtrosEstoque.material}
+                onChange={(e) =>
+                  setFiltrosEstoque({ ...filtrosEstoque, material: e.target.value })
+                }
+              />
+            </label>
 
-            <input
-              placeholder="NF"
-              value={filtrosEstoque.nf}
-              onChange={(e) =>
-                setFiltrosEstoque({ ...filtrosEstoque, nf: e.target.value })
-              }
-            />
+            <label>
+              Nota fiscal
+              <input
+                placeholder="NF"
+                value={filtrosEstoque.nf}
+                onChange={(e) =>
+                  setFiltrosEstoque({ ...filtrosEstoque, nf: e.target.value })
+                }
+              />
+            </label>
 
-            <input
-              placeholder="Rua"
-              value={filtrosEstoque.rua}
-              onChange={(e) =>
-                setFiltrosEstoque({ ...filtrosEstoque, rua: e.target.value })
-              }
-            />
+            <label>
+              Rua
+              <input
+                placeholder="Rua"
+                value={filtrosEstoque.rua}
+                onChange={(e) =>
+                  setFiltrosEstoque({ ...filtrosEstoque, rua: e.target.value })
+                }
+              />
+            </label>
 
-            <input
-              placeholder="Seção"
-              value={filtrosEstoque.secao}
-              onChange={(e) =>
-                setFiltrosEstoque({ ...filtrosEstoque, secao: e.target.value })
-              }
-            />
+            <label>
+              Seção
+              <input
+                placeholder="Seção"
+                value={filtrosEstoque.secao}
+                onChange={(e) =>
+                  setFiltrosEstoque({ ...filtrosEstoque, secao: e.target.value })
+                }
+              />
+            </label>
           </div>
 
           <div className="op-lote-estoque-list">
@@ -309,13 +406,12 @@ export default function ModalOPLote({
                       value={
                         itensSelecionados[item.id]?.quantidade_prevista || ''
                       }
-                      onChange={(e) =>
-                        alterarItem(
-                          item.id,
-                          'quantidade_prevista',
-                          e.target.value
-                        )
-                      }
+                      onKeyDown={(e) => {
+                        if (['-', '+', 'e', 'E', '.', ','].includes(e.key)) {
+                          e.preventDefault()
+                        }
+                      }}
+                      onChange={(e) => alterarQuantidade(item, e.target.value)}
                     />
                     <small>
                       {selecionado
