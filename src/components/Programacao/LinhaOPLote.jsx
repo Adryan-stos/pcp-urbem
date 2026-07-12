@@ -61,7 +61,9 @@ export default function LinhaOPLote({
       </td>
 
       <td className="priority-cell">
-        #{Number(opLote.prioridade ?? 0) + 1}
+        {opLote.prioridade == null
+          ? '-'
+          : `#${Number(opLote.prioridade) + 1}`}
       </td>
 
       <td>
