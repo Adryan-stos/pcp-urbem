@@ -21,7 +21,9 @@ export default function LinhaProcesso({
   finalizarArraste,
   alterarDataInicio,
   alterarStatusPCP,
-  moverPrioridade
+  moverPrioridade,
+  recursosSetor,
+  alterarRecursoProcesso
 }) {
   const op = processo.ordens_producao
   const item = op?.itens_projeto
@@ -58,6 +60,21 @@ export default function LinhaProcesso({
       </td>
 
       <td>{carregamento?.data_prevista || '-'}</td>
+
+      <td>
+        <select
+          value={processo.recurso_id || ''}
+          onChange={(e) => alterarRecursoProcesso(processo.id, e.target.value)}
+          aria-label={`Máquina da ${op?.numero_op || 'OP'}`}
+        >
+          <option value="">Selecionar máquina</option>
+          {recursosSetor.map((recurso) => (
+            <option key={recurso.id} value={recurso.id}>
+              {recurso.nome}
+            </option>
+          ))}
+        </select>
+      </td>
 
       <td>
         <input

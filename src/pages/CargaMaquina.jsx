@@ -41,6 +41,7 @@ export default function CargaMaquina() {
   const [setorAtual, setSetorAtual] = useState('AUTOCLAVE')
   const [fabricaAtual, setFabricaAtual] = useState(1)
   const [processos, setProcessos] = useState([])
+  const [recursosSetor, setRecursosSetor] = useState([])
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState('')
   const [linhaArrastada, setLinhaArrastada] = useState(null)
@@ -119,8 +120,27 @@ async function carregarProcessos() {
   }
 }
 
+async function carregarRecursosSetor() {
+  try {
+    const { data, error } = await supabase
+      .from('recursos_produtivos')
+      .select('id, codigo, nome, fabrica, processo, tipo_recurso')
+      .eq('fabrica', fabricaAtual)
+      .eq('processo', setorAtual)
+      .eq('ativo', true)
+      .order('nome')
+
+    if (error) throw error
+    setRecursosSetor(data || [])
+  } catch (error) {
+    setErro(error.message)
+    setRecursosSetor([])
+  }
+}
+
   useEffect(() => {
     carregarProcessos()
+    carregarRecursosSetor()
 }, [setorAtual, fabricaAtual])
 
   const processosDoSetor = processos
@@ -215,6 +235,26 @@ async function carregarProcessos() {
     await atualizarProcesso(processoId, {
       status_pcp: status
     })
+  }
+
+  async function alterarRecursoProcesso(processoId, recursoId) {
+    await atualizarProcesso(processoId, {
+      recurso_id: recursoId || null
+    })
+  }
+
+  async function alterarRecursoOPLote(opLoteId, recursoId) {
+    const { error } = await supabase
+      .from('op_lotes')
+      .update({ recurso_id: recursoId || null })
+      .eq('id', opLoteId)
+
+    if (error) {
+      setErro(error.message)
+      return
+    }
+
+    carregarProcessos()
   }
 
     async function reorganizarFila(processoMovido, prioridadeDestino) {
@@ -579,6 +619,8 @@ async function carregarProcessos() {
           setLinhaSobre={setLinhaSobre}
           reorganizarFilaOPLote={reorganizarFilaOPLote}
           moverPrioridadeOPLote={moverPrioridadeOPLote}
+          recursosSetor={recursosSetor}
+          alterarRecursoOPLote={alterarRecursoOPLote}
         />
       ) : (
         <PlannerFabrica2
@@ -597,6 +639,8 @@ async function carregarProcessos() {
           alterarDataInicio={alterarDataInicio}
           alterarStatusPCP={alterarStatusPCP}
           moverPrioridade={moverPrioridade}
+          recursosSetor={recursosSetor}
+          alterarRecursoProcesso={alterarRecursoProcesso}
         />
       )}
 

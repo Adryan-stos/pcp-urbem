@@ -15,7 +15,9 @@ export default function PlannerFabrica2({
   finalizarArraste,
   alterarDataInicio,
   alterarStatusPCP,
-  moverPrioridade
+  moverPrioridade,
+  recursosSetor,
+  alterarRecursoProcesso
 }) {
   return (
     <section className="table-card">
@@ -27,6 +29,7 @@ export default function PlannerFabrica2({
               <th>O.P</th>
               <th>Projeto</th>
               <th>Prazo entrega</th>
+              <th>Máquina</th>
               <th>Entrada em máquina</th>
               <th>Previsão término</th>
               <th>Status PCP</th>
@@ -56,7 +59,7 @@ export default function PlannerFabrica2({
                     onDrop={(event) => soltarNaPosicao(event, posicao)}
                   >
                     <td className="priority-cell">#{posicao + 1}</td>
-                    <td colSpan="9" className="empty">
+                    <td colSpan="10" className="empty">
                       Sem OP programada nesta posição.
                     </td>
                   </tr>
@@ -76,13 +79,15 @@ export default function PlannerFabrica2({
                   alterarDataInicio={alterarDataInicio}
                   alterarStatusPCP={alterarStatusPCP}
                   moverPrioridade={moverPrioridade}
+                  recursosSetor={recursosSetor}
+                  alterarRecursoProcesso={alterarRecursoProcesso}
                 />
               )
             })}
 
             {processosSemPrioridade.length > 0 && (
               <tr className="machine-section-row">
-                <td colSpan="10">Aguardando programação</td>
+                <td colSpan="11">Aguardando programação</td>
               </tr>
             )}
 
@@ -100,12 +105,14 @@ export default function PlannerFabrica2({
                 alterarDataInicio={alterarDataInicio}
                 alterarStatusPCP={alterarStatusPCP}
                 moverPrioridade={moverPrioridade}
+                recursosSetor={recursosSetor}
+                alterarRecursoProcesso={alterarRecursoProcesso}
               />
             ))}
 
             {!processosDoSetor.length && (
               <tr>
-                <td colSpan="10" className="empty">
+                <td colSpan="11" className="empty">
                   Nenhum processo liberado para este setor.
                 </td>
               </tr>
