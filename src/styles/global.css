@@ -3754,6 +3754,38 @@ td {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.capacity-resource-form-grid label small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.capacity-factory-filter {
+  display: flex;
+  width: fit-content;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .72);
+}
+
+.capacity-factory-filter button {
+  padding: 9px 18px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.capacity-factory-filter button.active {
+  background: var(--urbem-green);
+  color: #fff;
+}
+
 .capacity-empty-state {
   display: grid;
   justify-items: center;

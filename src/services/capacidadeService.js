@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabase'
 
-export async function listarRecursosFabrica1() {
-  const { data, error } = await supabase
+export async function listarRecursosProdutivos(fabrica = null) {
+  let consulta = supabase
     .from('recursos_produtivos')
     .select(`
       *,
@@ -9,9 +9,13 @@ export async function listarRecursosFabrica1() {
       calendarios_recursos (*),
       bloqueios_recursos (*)
     `)
-    .eq('fabrica', 1)
     .eq('ativo', true)
+    .order('fabrica')
     .order('nome')
+
+  if (fabrica) consulta = consulta.eq('fabrica', Number(fabrica))
+
+  const { data, error } = await consulta
 
   if (error) throw error
 
@@ -32,10 +36,12 @@ export async function criarRecursoProdutivo(recurso) {
     .insert([{
       codigo: recurso.codigo.trim().toUpperCase(),
       nome: recurso.nome.trim(),
-      fabrica: 1,
+      fabrica: Number(recurso.fabrica),
       processo: recurso.processo.trim().toUpperCase(),
       tipo_recurso: recurso.tipoRecurso,
-      quantidade_recursos: Number(recurso.quantidadeRecursos || 1),
+      quantidade_recursos: recurso.tipoRecurso === 'Grupo de recursos'
+        ? Number(recurso.quantidadeRecursos || 1)
+        : 1,
       observacao: recurso.observacao || null
     }])
     .select()
