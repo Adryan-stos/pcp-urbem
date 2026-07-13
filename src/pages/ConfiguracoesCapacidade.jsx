@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CalendarDays, Database, RefreshCw, Save } from 'lucide-react'
+import { CalendarDays, Database, Plus, RefreshCw, Save, X } from 'lucide-react'
 import {
   criarCapacidadeRecurso,
+  criarRecursoProdutivo,
   listarRecursosFabrica1,
   salvarCalendarioRecurso
 } from '../services/capacidadeService.js'
@@ -21,6 +22,15 @@ const CAPACIDADE_INICIAL = {
   observacao: ''
 }
 
+const RECURSO_INICIAL = {
+  codigo: '',
+  nome: '',
+  processo: 'AUTOCLAVE',
+  tipoRecurso: 'Equipamento por lote',
+  quantidadeRecursos: '1',
+  observacao: ''
+}
+
 function calendarioInicial() {
   return NOMES_DIAS.map((_, diaSemana) => ({
     diaSemana,
@@ -36,6 +46,8 @@ export default function ConfiguracoesCapacidade() {
   const [recursos, setRecursos] = useState([])
   const [recursoId, setRecursoId] = useState('')
   const [capacidade, setCapacidade] = useState(CAPACIDADE_INICIAL)
+  const [novoRecurso, setNovoRecurso] = useState(RECURSO_INICIAL)
+  const [formRecursoAberto, setFormRecursoAberto] = useState(false)
   const [calendario, setCalendario] = useState(calendarioInicial)
   const [carregando, setCarregando] = useState(false)
   const [salvando, setSalvando] = useState(false)
@@ -100,6 +112,36 @@ export default function ConfiguracoesCapacidade() {
         posicao === indice ? { ...dia, [campo]: valor } : dia
       )
     )
+  }
+
+  async function salvarRecurso(event) {
+    event.preventDefault()
+
+    if (!novoRecurso.codigo.trim() || !novoRecurso.nome.trim() || !novoRecurso.processo.trim()) {
+      setErro('Informe código, nome e processo do recurso.')
+      return
+    }
+
+    if (Number(novoRecurso.quantidadeRecursos) < 1) {
+      setErro('A quantidade de recursos deve ser no mínimo 1.')
+      return
+    }
+
+    try {
+      setSalvando(true)
+      setErro('')
+      setSucesso('')
+      const criado = await criarRecursoProdutivo(novoRecurso)
+      setNovoRecurso(RECURSO_INICIAL)
+      setFormRecursoAberto(false)
+      setSucesso('Recurso produtivo cadastrado.')
+      await carregar()
+      setRecursoId(criado.id)
+    } catch (error) {
+      setErro(error.message)
+    } finally {
+      setSalvando(false)
+    }
   }
 
   async function salvarCapacidade(event) {
@@ -168,14 +210,101 @@ export default function ConfiguracoesCapacidade() {
           <span>Parâmetros versionados para planejamento das OPs de lote.</span>
         </div>
 
-        <button className="btn ghost" onClick={carregar} disabled={carregando}>
-          <RefreshCw size={16} />
-          Atualizar
-        </button>
+        <div className="page-header-actions">
+          <button
+            className="btn primary"
+            onClick={() => setFormRecursoAberto((aberto) => !aberto)}
+          >
+            {formRecursoAberto ? <X size={16} /> : <Plus size={16} />}
+            {formRecursoAberto ? 'Fechar cadastro' : 'Novo recurso'}
+          </button>
+          <button className="btn ghost" onClick={carregar} disabled={carregando}>
+            <RefreshCw size={16} />
+            Atualizar
+          </button>
+        </div>
       </header>
 
       {erro && <div className="alert">{erro}</div>}
       {sucesso && <div className="capacity-success">{sucesso}</div>}
+
+      {formRecursoAberto && (
+        <form className="capacity-panel capacity-new-resource" onSubmit={salvarRecurso}>
+          <div className="capacity-panel-title">
+            <Plus size={19} />
+            <div>
+              <h3>Novo recurso produtivo</h3>
+              <span>Cadastre máquinas, equipamentos ou linhas da Fábrica 1.</span>
+            </div>
+          </div>
+
+          <div className="capacity-form-grid capacity-resource-form-grid">
+            <label>
+              Código
+              <input
+                placeholder="Ex.: F1-AUTOCLAVE-02"
+                value={novoRecurso.codigo}
+                onChange={(e) => setNovoRecurso({ ...novoRecurso, codigo: e.target.value })}
+              />
+            </label>
+            <label>
+              Nome
+              <input
+                placeholder="Nome do recurso"
+                value={novoRecurso.nome}
+                onChange={(e) => setNovoRecurso({ ...novoRecurso, nome: e.target.value })}
+              />
+            </label>
+            <label>
+              Processo
+              <select
+                value={novoRecurso.processo}
+                onChange={(e) => setNovoRecurso({ ...novoRecurso, processo: e.target.value })}
+              >
+                <option>AUTOCLAVE</option>
+                <option>GRADEADOR</option>
+                <option>ESTUFA</option>
+                <option>CLASSIFICADORA</option>
+              </select>
+            </label>
+            <label>
+              Tipo de recurso
+              <select
+                value={novoRecurso.tipoRecurso}
+                onChange={(e) => setNovoRecurso({ ...novoRecurso, tipoRecurso: e.target.value })}
+              >
+                <option>Equipamento por lote</option>
+                <option>Linha de processo</option>
+                <option>Máquina</option>
+                <option>Recurso manual</option>
+              </select>
+            </label>
+            <label>
+              Quantidade de recursos
+              <input
+                type="number"
+                min="1"
+                step="1"
+                value={novoRecurso.quantidadeRecursos}
+                onChange={(e) => setNovoRecurso({ ...novoRecurso, quantidadeRecursos: e.target.value })}
+              />
+            </label>
+            <label>
+              Observação
+              <input
+                placeholder="Informação complementar"
+                value={novoRecurso.observacao}
+                onChange={(e) => setNovoRecurso({ ...novoRecurso, observacao: e.target.value })}
+              />
+            </label>
+          </div>
+
+          <button className="btn primary" disabled={salvando}>
+            <Save size={16} />
+            Salvar recurso
+          </button>
+        </form>
+      )}
 
       <section className="capacity-resource-grid">
         {recursos.map((recurso) => {
@@ -202,7 +331,18 @@ export default function ConfiguracoesCapacidade() {
       </section>
 
       {!carregando && !recursos.length && (
-        <div className="empty">Execute a migration de capacidade para carregar os recursos.</div>
+        <div className="capacity-empty-state">
+          <Database size={28} />
+          <strong>Nenhum recurso da Fábrica 1 encontrado</strong>
+          <span>
+            Execute a migration de capacidade no Supabase ou utilize “Novo recurso”
+            após confirmar que as tabelas foram criadas.
+          </span>
+          <button className="btn primary" onClick={() => setFormRecursoAberto(true)}>
+            <Plus size={16} />
+            Cadastrar recurso
+          </button>
+        </div>
       )}
 
       {recursoAtual && (

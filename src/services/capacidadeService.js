@@ -26,6 +26,25 @@ export async function listarRecursosFabrica1() {
   }))
 }
 
+export async function criarRecursoProdutivo(recurso) {
+  const { data, error } = await supabase
+    .from('recursos_produtivos')
+    .insert([{
+      codigo: recurso.codigo.trim().toUpperCase(),
+      nome: recurso.nome.trim(),
+      fabrica: 1,
+      processo: recurso.processo.trim().toUpperCase(),
+      tipo_recurso: recurso.tipoRecurso,
+      quantidade_recursos: Number(recurso.quantidadeRecursos || 1),
+      observacao: recurso.observacao || null
+    }])
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
 export async function criarCapacidadeRecurso(recursoId, capacidade) {
   const { data, error } = await supabase
     .from('capacidades_recursos')
