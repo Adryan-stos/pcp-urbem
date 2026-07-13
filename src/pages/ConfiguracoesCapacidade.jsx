@@ -3,11 +3,28 @@ import { CalendarDays, Database, Plus, RefreshCw, Save, X } from 'lucide-react'
 import {
   criarCapacidadeRecurso,
   criarRecursoProdutivo,
-  listarRecursosFabrica1,
+  listarRecursosProdutivos,
   salvarCalendarioRecurso
 } from '../services/capacidadeService.js'
 
 const NOMES_DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
+
+const PROCESSOS_POR_FABRICA = {
+  1: [
+    { valor: 'AUTOCLAVE', nome: 'Autoclave' },
+    { valor: 'GRADEADOR', nome: 'Gradeador' },
+    { valor: 'ESTUFA', nome: 'Estufa' },
+    { valor: 'CLASSIFICADORA', nome: 'Classificadora' }
+  ],
+  2: [
+    { valor: 'OTIMIZADORA/FINGER', nome: 'Otimizadora / Finger' },
+    { valor: 'PLAINA', nome: 'Plainas' },
+    { valor: 'PRENSA', nome: 'Prensas' },
+    { valor: 'DESTOPADEIRA', nome: 'Destopadeira' },
+    { valor: 'CNC', nome: 'CNC' },
+    { valor: 'ACABAMENTO', nome: 'Acabamento' }
+  ]
+}
 
 const CAPACIDADE_INICIAL = {
   tipoMedicao: 'Por ciclo',
@@ -23,10 +40,11 @@ const CAPACIDADE_INICIAL = {
 }
 
 const RECURSO_INICIAL = {
+  fabrica: '1',
   codigo: '',
   nome: '',
   processo: 'AUTOCLAVE',
-  tipoRecurso: 'Equipamento por lote',
+  tipoRecurso: 'Máquina individual',
   quantidadeRecursos: '1',
   observacao: ''
 }
@@ -43,6 +61,7 @@ function calendarioInicial() {
 }
 
 export default function ConfiguracoesCapacidade() {
+  const [filtroFabrica, setFiltroFabrica] = useState('1')
   const [recursos, setRecursos] = useState([])
   const [recursoId, setRecursoId] = useState('')
   const [capacidade, setCapacidade] = useState(CAPACIDADE_INICIAL)
@@ -63,7 +82,7 @@ export default function ConfiguracoesCapacidade() {
     try {
       setCarregando(true)
       setErro('')
-      const dados = await listarRecursosFabrica1()
+      const dados = await listarRecursosProdutivos(filtroFabrica)
       setRecursos(dados)
       setRecursoId((atual) => atual || dados[0]?.id || '')
     } catch (error) {
@@ -75,7 +94,14 @@ export default function ConfiguracoesCapacidade() {
 
   useEffect(() => {
     carregar()
-  }, [])
+  }, [filtroFabrica])
+
+  const processosNovoRecurso = PROCESSOS_POR_FABRICA[Number(novoRecurso.fabrica)]
+
+  function alterarFabricaNovoRecurso(fabrica) {
+    const primeiroProcesso = PROCESSOS_POR_FABRICA[Number(fabrica)][0].valor
+    setNovoRecurso((atual) => ({ ...atual, fabrica, processo: primeiroProcesso }))
+  }
 
   useEffect(() => {
     if (!recursoAtual) return
@@ -122,8 +148,11 @@ export default function ConfiguracoesCapacidade() {
       return
     }
 
-    if (Number(novoRecurso.quantidadeRecursos) < 1) {
-      setErro('A quantidade de recursos deve ser no mínimo 1.')
+    if (
+      novoRecurso.tipoRecurso === 'Grupo de recursos' &&
+      Number(novoRecurso.quantidadeRecursos) < 2
+    ) {
+      setErro('Um grupo deve possuir no mínimo 2 recursos idênticos.')
       return
     }
 
@@ -132,7 +161,7 @@ export default function ConfiguracoesCapacidade() {
       setErro('')
       setSucesso('')
       const criado = await criarRecursoProdutivo(novoRecurso)
-      setNovoRecurso(RECURSO_INICIAL)
+      setNovoRecurso({ ...RECURSO_INICIAL, fabrica: novoRecurso.fabrica, processo: processosNovoRecurso[0].valor })
       setFormRecursoAberto(false)
       setSucesso('Recurso produtivo cadastrado.')
       await carregar()
@@ -205,9 +234,9 @@ export default function ConfiguracoesCapacidade() {
     <div className="page capacity-page">
       <header className="page-header">
         <div>
-          <p className="eyebrow">Configurações · Fábrica 1</p>
+          <p className="eyebrow">Configurações · Recursos produtivos</p>
           <h2>Recursos e Capacidade</h2>
-          <span>Parâmetros versionados para planejamento das OPs de lote.</span>
+          <span>Cadastro das máquinas, linhas e recursos das Fábricas 1 e 2.</span>
         </div>
 
         <div className="page-header-actions">
@@ -234,15 +263,25 @@ export default function ConfiguracoesCapacidade() {
             <Plus size={19} />
             <div>
               <h3>Novo recurso produtivo</h3>
-              <span>Cadastre máquinas, equipamentos ou linhas da Fábrica 1.</span>
+              <span>Cadastre recursos individuais ou grupos idênticos das duas fábricas.</span>
             </div>
           </div>
 
           <div className="capacity-form-grid capacity-resource-form-grid">
             <label>
+              Fábrica
+              <select
+                value={novoRecurso.fabrica}
+                onChange={(e) => alterarFabricaNovoRecurso(e.target.value)}
+              >
+                <option value="1">Fábrica 1</option>
+                <option value="2">Fábrica 2</option>
+              </select>
+            </label>
+            <label>
               Código
               <input
-                placeholder="Ex.: F1-AUTOCLAVE-02"
+                placeholder={`Ex.: F${novoRecurso.fabrica}-${novoRecurso.processo.replace('/', '-')}-01`}
                 value={novoRecurso.codigo}
                 onChange={(e) => setNovoRecurso({ ...novoRecurso, codigo: e.target.value })}
               />
@@ -261,10 +300,9 @@ export default function ConfiguracoesCapacidade() {
                 value={novoRecurso.processo}
                 onChange={(e) => setNovoRecurso({ ...novoRecurso, processo: e.target.value })}
               >
-                <option>AUTOCLAVE</option>
-                <option>GRADEADOR</option>
-                <option>ESTUFA</option>
-                <option>CLASSIFICADORA</option>
+                {processosNovoRecurso.map((processo) => (
+                  <option key={processo.valor} value={processo.valor}>{processo.nome}</option>
+                ))}
               </select>
             </label>
             <label>
@@ -273,22 +311,26 @@ export default function ConfiguracoesCapacidade() {
                 value={novoRecurso.tipoRecurso}
                 onChange={(e) => setNovoRecurso({ ...novoRecurso, tipoRecurso: e.target.value })}
               >
+                <option>Máquina individual</option>
                 <option>Equipamento por lote</option>
                 <option>Linha de processo</option>
-                <option>Máquina</option>
                 <option>Recurso manual</option>
+                <option>Grupo de recursos</option>
               </select>
             </label>
-            <label>
-              Quantidade de recursos
-              <input
-                type="number"
-                min="1"
-                step="1"
-                value={novoRecurso.quantidadeRecursos}
-                onChange={(e) => setNovoRecurso({ ...novoRecurso, quantidadeRecursos: e.target.value })}
-              />
-            </label>
+            {novoRecurso.tipoRecurso === 'Grupo de recursos' && (
+              <label>
+                Quantidade de recursos idênticos
+                <input
+                  type="number"
+                  min="2"
+                  step="1"
+                  value={novoRecurso.quantidadeRecursos}
+                  onChange={(e) => setNovoRecurso({ ...novoRecurso, quantidadeRecursos: e.target.value })}
+                />
+                <small>Use somente quando todos compartilham capacidade e calendário.</small>
+              </label>
+            )}
             <label>
               Observação
               <input
@@ -306,6 +348,19 @@ export default function ConfiguracoesCapacidade() {
         </form>
       )}
 
+      <div className="capacity-factory-filter" role="group" aria-label="Filtrar recursos por fábrica">
+        {[['1', 'Fábrica 1'], ['2', 'Fábrica 2']].map(([valor, rotulo]) => (
+          <button
+            type="button"
+            key={valor}
+            className={filtroFabrica === valor ? 'active' : ''}
+            onClick={() => { setFiltroFabrica(valor); setRecursoId('') }}
+          >
+            {rotulo}
+          </button>
+        ))}
+      </div>
+
       <section className="capacity-resource-grid">
         {recursos.map((recurso) => {
           const vigente = recurso.capacidades_recursos?.find((item) => item.ativo)
@@ -319,7 +374,8 @@ export default function ConfiguracoesCapacidade() {
             >
               <span>{recurso.codigo}</span>
               <strong>{recurso.nome}</strong>
-              <small>{recurso.tipo_recurso}</small>
+              <small>Fábrica {recurso.fabrica} · {recurso.processo}</small>
+              <small>{recurso.tipo_recurso}{recurso.quantidade_recursos > 1 ? ` · ${recurso.quantidade_recursos} unidades` : ''}</small>
               <em>
                 {vigente
                   ? `${Number(vigente.capacidade_nominal)} ${vigente.unidade} · ${vigente.tipo_medicao}`
@@ -333,10 +389,9 @@ export default function ConfiguracoesCapacidade() {
       {!carregando && !recursos.length && (
         <div className="capacity-empty-state">
           <Database size={28} />
-          <strong>Nenhum recurso da Fábrica 1 encontrado</strong>
+          <strong>Nenhum recurso da Fábrica {filtroFabrica} encontrado</strong>
           <span>
-            Execute a migration de capacidade no Supabase ou utilize “Novo recurso”
-            após confirmar que as tabelas foram criadas.
+            Execute a migration correspondente no Supabase ou utilize “Novo recurso”.
           </span>
           <button className="btn primary" onClick={() => setFormRecursoAberto(true)}>
             <Plus size={16} />
