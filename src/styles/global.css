@@ -3735,6 +3735,42 @@ td {
   font-weight: 800;
 }
 
+.page-header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.capacity-new-resource {
+  border-color: rgba(20, 85, 80, .32);
+  background: #fbfefd;
+}
+
+.capacity-new-resource .btn {
+  justify-self: end;
+}
+
+.capacity-resource-form-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.capacity-empty-state {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 42px 24px;
+  border: 1px dashed rgba(20, 85, 80, .35);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, .62);
+  color: var(--urbem-green);
+  text-align: center;
+}
+
+.capacity-empty-state span {
+  max-width: 620px;
+  color: var(--muted);
+}
+
 .capacity-resource-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(180px, 1fr));
@@ -3888,5 +3924,9 @@ td {
 
   .capacity-calendar-row {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .capacity-resource-form-grid {
+    grid-template-columns: 1fr;
   }
 }

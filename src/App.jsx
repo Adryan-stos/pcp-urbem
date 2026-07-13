@@ -205,13 +205,32 @@ function App() {
             Indicadores
           </button>
 
-          <button
-            className={`menu-item ${paginaAtual === 'configuracoes-capacidade' ? 'active' : ''}`}
-            onClick={() => setPaginaAtual('configuracoes-capacidade')}
-          >
-            <Settings size={18} />
-            Configurações
-          </button>
+          <div className="menu-group">
+            <button
+              className={`menu-item ${menuAberto === 'configuracoes' || paginaAtual.startsWith('configuracoes') ? 'active' : ''}`}
+              onClick={() => alternarMenu('configuracoes')}
+            >
+              <Settings size={18} />
+              Configurações
+            </button>
+
+            {menuAberto === 'configuracoes' && (
+              <div className="submenu">
+                <button onClick={() => setPaginaAtual('configuracoes-capacidade')}>
+                  Recursos e Capacidade
+                </button>
+                <button disabled title="Disponível em uma próxima etapa">
+                  Usuários
+                </button>
+                <button disabled title="Disponível em uma próxima etapa">
+                  Perfis e Acessos
+                </button>
+                <button disabled title="Disponível em uma próxima etapa">
+                  Parâmetros Gerais
+                </button>
+              </div>
+            )}
+          </div>
         </nav>
       </aside>
 
