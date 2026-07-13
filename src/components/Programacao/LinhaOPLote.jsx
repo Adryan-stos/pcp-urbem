@@ -7,7 +7,9 @@ export default function LinhaOPLote({
   setLinhaArrastada,
   setLinhaSobre,
   reorganizarFilaOPLote,
-  moverPrioridadeOPLote
+  moverPrioridadeOPLote,
+  recursosSetor,
+  alterarRecursoOPLote
 }) {
   const itens = opLote.op_lote_itens || []
 
@@ -108,6 +110,21 @@ export default function LinhaOPLote({
         <strong>{opLote.buffer_saida || '-'}</strong>
         <br />
         <small>Saída</small>
+      </td>
+
+      <td>
+        <select
+          value={opLote.recurso_id || ''}
+          onChange={(e) => alterarRecursoOPLote(opLote.id, e.target.value)}
+          aria-label={`Máquina da ${opLote.numero_op_lote}`}
+        >
+          <option value="">Selecionar máquina</option>
+          {recursosSetor.map((recurso) => (
+            <option key={recurso.id} value={recurso.id}>
+              {recurso.nome}
+            </option>
+          ))}
+        </select>
       </td>
 
       <td>
