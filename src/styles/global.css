@@ -3924,6 +3924,23 @@ td {
   text-transform: uppercase;
 }
 
+.capacity-calendar-header {
+  display: grid;
+  grid-template-columns: minmax(120px, 1.3fr) repeat(4, minmax(90px, 1fr));
+  gap: 8px;
+  padding: 0 8px 4px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+@media (max-width: 700px) {
+  .capacity-calendar-header {
+    display: none;
+  }
+}
+
 @media (max-width: 900px) {
   .capacity-projection-title,
   .capacity-period-filter {
