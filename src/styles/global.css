@@ -3860,6 +3860,87 @@ td {
   align-items: start;
 }
 
+.capacity-projection-panel {
+  overflow: hidden;
+}
+
+.capacity-projection-title {
+  align-items: center;
+}
+
+.capacity-period-filter {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.capacity-period-filter label {
+  min-width: 150px;
+}
+
+.capacity-projection-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.capacity-projection-kpis div {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #f7fbfa;
+}
+
+.capacity-projection-kpis span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.capacity-projection-kpis strong {
+  color: var(--urbem-green);
+  font-size: 20px;
+}
+
+.capacity-projection-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.capacity-projection-table th,
+.capacity-projection-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.capacity-projection-table th {
+  color: var(--urbem-green);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+@media (max-width: 900px) {
+  .capacity-projection-title,
+  .capacity-period-filter {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .capacity-period-filter {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .capacity-projection-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .capacity-panel {
   display: grid;
   gap: 18px;
