@@ -77,15 +77,31 @@ export async function criarCapacidadeRecurso(recursoId, capacidade) {
 }
 
 export async function salvarCalendarioRecurso(recursoId, dias) {
-  const registros = dias.map((dia) => ({
-    recurso_id: recursoId,
-    dia_semana: dia.diaSemana,
-    hora_inicio: dia.horaInicio,
-    hora_fim: dia.horaFim,
-    intervalo_inicio: dia.intervaloInicio || null,
-    intervalo_fim: dia.intervaloFim || null,
-    ativo: dia.ativo
-  }))
+  const registros = dias.map((dia) => {
+    const ativo = Boolean(dia.ativo)
+    const inicioInformado = dia.horaInicio || '00:00'
+    const jornadaValida = Boolean(dia.horaFim) && dia.horaFim > inicioInformado
+    const horaInicio = jornadaValida ? inicioInformado : '00:00'
+    const horaFim = jornadaValida ? dia.horaFim : '00:01'
+
+    return {
+      recurso_id: recursoId,
+      dia_semana: dia.diaSemana,
+      // As colunas são obrigatórias mesmo em dias inativos. Os valores abaixo
+      // mantêm a linha válida sem criarem disponibilidade no calendário.
+      hora_inicio: horaInicio,
+      hora_fim: horaFim,
+      // Intervalos de dias inativos não participam do cálculo e não devem
+      // infringir a constraint que exige o par completo dentro da jornada.
+      intervalo_inicio: ativo && dia.intervaloInicio && dia.intervaloFim
+        ? dia.intervaloInicio
+        : null,
+      intervalo_fim: ativo && dia.intervaloInicio && dia.intervaloFim
+        ? dia.intervaloFim
+        : null,
+      ativo
+    }
+  })
 
   const { error } = await supabase
     .from('calendarios_recursos')
