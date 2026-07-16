@@ -87,7 +87,9 @@ function calcularProjecao(recurso, dataInicio, dataFim) {
       if (capacidade.tipo_medicao === 'Por hora') {
         capacidadeDisponivel = nominal * (minutosDisponiveis / 60) * multiplicador
       } else if (capacidade.tipo_medicao === 'Por turno') {
-        capacidadeDisponivel = nominal * multiplicador
+        capacidadeDisponivel = minutosCalendario > 0
+          ? nominal * (minutosDisponiveis / minutosCalendario) * multiplicador
+          : 0
       } else {
         const minutosCiclo = Number(capacidade.duracao_ciclo_minutos || 0)
           + Number(capacidade.tempo_setup_minutos || 0)
