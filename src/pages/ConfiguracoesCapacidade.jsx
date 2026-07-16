@@ -167,6 +167,17 @@ function calendarioInicial() {
   }))
 }
 
+function resumirJornada(dia) {
+  if (!dia.ativo) return 'Dia não produtivo'
+  if (!dia.horaInicio || !dia.horaFim) return 'Preencha o início e o fim da jornada'
+
+  if (dia.intervaloInicio && dia.intervaloFim) {
+    return `Períodos produtivos: ${dia.horaInicio}–${dia.intervaloInicio} e ${dia.intervaloFim}–${dia.horaFim}`
+  }
+
+  return `Período produtivo: ${dia.horaInicio}–${dia.horaFim}, sem intervalo`
+}
+
 export default function ConfiguracoesCapacidade() {
   const hoje = formatarDataLocal(new Date())
   const [filtroFabrica, setFiltroFabrica] = useState('1')
@@ -711,18 +722,16 @@ export default function ConfiguracoesCapacidade() {
               <CalendarDays size={19} />
               <div>
                 <h3>Calendário semanal</h3>
-                <span>Modelo inicial; revise antes de salvar.</span>
+                <span>Informe a jornada total do dia e, dentro dela, o período de parada.</span>
               </div>
             </div>
 
+            <div className="capacity-calendar-guidance">
+              <strong>Exemplo para dois períodos:</strong>
+              <span>Produção 06:00–13:00 e 14:00–22:00 → jornada 06:00–22:00, intervalo 13:00–14:00.</span>
+            </div>
+
             <div className="capacity-calendar-list">
-              <div className="capacity-calendar-header" aria-hidden="true">
-                <span>Dia ativo</span>
-                <span>Início</span>
-                <span>Fim</span>
-                <span>Início intervalo</span>
-                <span>Fim intervalo</span>
-              </div>
               {calendario.map((dia, indice) => (
                 <div className={`capacity-calendar-row ${dia.ativo ? '' : 'inactive'}`} key={dia.diaSemana}>
                   <label className="capacity-day-check">
@@ -733,30 +742,43 @@ export default function ConfiguracoesCapacidade() {
                     />
                     {NOMES_DIAS[dia.diaSemana]}
                   </label>
-                  <input
-                    type="time"
-                    disabled={!dia.ativo}
-                    value={dia.horaInicio}
-                    onChange={(e) => alterarCalendario(indice, 'horaInicio', e.target.value)}
-                  />
-                  <input
-                    type="time"
-                    disabled={!dia.ativo}
-                    value={dia.horaFim}
-                    onChange={(e) => alterarCalendario(indice, 'horaFim', e.target.value)}
-                  />
-                  <input
-                    type="time"
-                    disabled={!dia.ativo}
-                    value={dia.intervaloInicio}
-                    onChange={(e) => alterarCalendario(indice, 'intervaloInicio', e.target.value)}
-                  />
-                  <input
-                    type="time"
-                    disabled={!dia.ativo}
-                    value={dia.intervaloFim}
-                    onChange={(e) => alterarCalendario(indice, 'intervaloFim', e.target.value)}
-                  />
+                  <label className="capacity-calendar-time-field">
+                    <span>Início da jornada</span>
+                    <input
+                      type="time"
+                      disabled={!dia.ativo}
+                      value={dia.horaInicio}
+                      onChange={(e) => alterarCalendario(indice, 'horaInicio', e.target.value)}
+                    />
+                  </label>
+                  <label className="capacity-calendar-time-field">
+                    <span>Fim da jornada</span>
+                    <input
+                      type="time"
+                      disabled={!dia.ativo}
+                      value={dia.horaFim}
+                      onChange={(e) => alterarCalendario(indice, 'horaFim', e.target.value)}
+                    />
+                  </label>
+                  <label className="capacity-calendar-time-field">
+                    <span>Início do intervalo</span>
+                    <input
+                      type="time"
+                      disabled={!dia.ativo}
+                      value={dia.intervaloInicio}
+                      onChange={(e) => alterarCalendario(indice, 'intervaloInicio', e.target.value)}
+                    />
+                  </label>
+                  <label className="capacity-calendar-time-field">
+                    <span>Fim do intervalo</span>
+                    <input
+                      type="time"
+                      disabled={!dia.ativo}
+                      value={dia.intervaloFim}
+                      onChange={(e) => alterarCalendario(indice, 'intervaloFim', e.target.value)}
+                    />
+                  </label>
+                  <div className="capacity-calendar-summary">{resumirJornada(dia)}</div>
                 </div>
               ))}
             </div>
