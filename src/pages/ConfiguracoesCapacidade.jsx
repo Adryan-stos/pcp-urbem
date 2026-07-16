@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CalendarDays, Database, Plus, RefreshCw, Save, X } from 'lucide-react'
+import { Calculator, CalendarDays, Database, Plus, RefreshCw, Save, X } from 'lucide-react'
 import {
   criarCapacidadeRecurso,
   criarRecursoProdutivo,
@@ -8,6 +8,113 @@ import {
 } from '../services/capacidadeService.js'
 
 const NOMES_DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
+
+function formatarDataLocal(data) {
+  const ano = data.getFullYear()
+  const mes = String(data.getMonth() + 1).padStart(2, '0')
+  const dia = String(data.getDate()).padStart(2, '0')
+  return `${ano}-${mes}-${dia}`
+}
+
+function somarDias(data, quantidade) {
+  const resultado = new Date(`${data}T00:00:00`)
+  resultado.setDate(resultado.getDate() + quantidade)
+  return formatarDataLocal(resultado)
+}
+
+function dataComHora(data, hora) {
+  return new Date(`${data}T${String(hora).slice(0, 5)}:00`)
+}
+
+function minutosEntre(inicio, fim) {
+  return Math.max(0, (fim.getTime() - inicio.getTime()) / 60000)
+}
+
+function calcularProjecao(recurso, dataInicio, dataFim) {
+  if (!recurso || !dataInicio || !dataFim || dataFim < dataInicio) return []
+
+  const resultado = []
+  const cursor = new Date(`${dataInicio}T00:00:00`)
+  const limite = new Date(`${dataFim}T00:00:00`)
+
+  while (cursor <= limite && resultado.length < 93) {
+    const data = formatarDataLocal(cursor)
+    const calendario = (recurso.calendarios_recursos || []).find(
+      (item) => Number(item.dia_semana) === cursor.getDay() && item.ativo
+    )
+    const capacidade = (recurso.capacidades_recursos || []).find(
+      (item) => item.ativo && item.vigencia_inicio <= data && (!item.vigencia_fim || item.vigencia_fim >= data)
+    )
+
+    let minutosCalendario = 0
+    let minutosBloqueados = 0
+
+    if (calendario) {
+      const inicio = dataComHora(data, calendario.hora_inicio)
+      const fim = dataComHora(data, calendario.hora_fim)
+      const segmentos = calendario.intervalo_inicio && calendario.intervalo_fim
+        ? [
+            [inicio, dataComHora(data, calendario.intervalo_inicio)],
+            [dataComHora(data, calendario.intervalo_fim), fim]
+          ]
+        : [[inicio, fim]]
+
+      minutosCalendario = segmentos.reduce(
+        (total, [segmentoInicio, segmentoFim]) => total + minutosEntre(segmentoInicio, segmentoFim),
+        0
+      )
+
+      const bloqueios = (recurso.bloqueios_recursos || []).filter(
+        (item) => item.ativo && new Date(item.inicio) < fim && new Date(item.fim) > inicio
+      )
+
+      minutosBloqueados = segmentos.reduce((total, [segmentoInicio, segmentoFim]) => (
+        total + bloqueios.reduce((subtotal, bloqueio) => {
+          const sobreposicaoInicio = new Date(Math.max(segmentoInicio.getTime(), new Date(bloqueio.inicio).getTime()))
+          const sobreposicaoFim = new Date(Math.min(segmentoFim.getTime(), new Date(bloqueio.fim).getTime()))
+          return subtotal + minutosEntre(sobreposicaoInicio, sobreposicaoFim)
+        }, 0)
+      ), 0)
+    }
+
+    const minutosDisponiveis = Math.max(0, minutosCalendario - Math.min(minutosCalendario, minutosBloqueados))
+    let capacidadeDisponivel = 0
+
+    if (capacidade && minutosDisponiveis > 0) {
+      const nominal = Number(capacidade.capacidade_nominal || 0)
+      const multiplicador = Number(recurso.quantidade_recursos || 1)
+
+      if (capacidade.tipo_medicao === 'Por hora') {
+        capacidadeDisponivel = nominal * (minutosDisponiveis / 60) * multiplicador
+      } else if (capacidade.tipo_medicao === 'Por turno') {
+        capacidadeDisponivel = minutosCalendario > 0
+          ? nominal * (minutosDisponiveis / minutosCalendario) * multiplicador
+          : 0
+      } else {
+        const minutosCiclo = Number(capacidade.duracao_ciclo_minutos || 0)
+          + Number(capacidade.tempo_setup_minutos || 0)
+        capacidadeDisponivel = minutosCiclo > 0
+          ? Math.floor(minutosDisponiveis / minutosCiclo) * nominal * multiplicador
+          : 0
+      }
+    }
+
+    resultado.push({
+      data,
+      dia: NOMES_DIAS[cursor.getDay()],
+      minutosCalendario,
+      minutosBloqueados: Math.min(minutosCalendario, minutosBloqueados),
+      minutosDisponiveis,
+      capacidadeDisponivel,
+      unidade: capacidade?.unidade || '-',
+      configurado: Boolean(calendario && capacidade)
+    })
+
+    cursor.setDate(cursor.getDate() + 1)
+  }
+
+  return resultado
+}
 
 const PROCESSOS_POR_FABRICA = {
   1: [
@@ -61,6 +168,7 @@ function calendarioInicial() {
 }
 
 export default function ConfiguracoesCapacidade() {
+  const hoje = formatarDataLocal(new Date())
   const [filtroFabrica, setFiltroFabrica] = useState('1')
   const [recursos, setRecursos] = useState([])
   const [recursoId, setRecursoId] = useState('')
@@ -72,11 +180,28 @@ export default function ConfiguracoesCapacidade() {
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
   const [sucesso, setSucesso] = useState('')
+  const [periodoInicio, setPeriodoInicio] = useState(hoje)
+  const [periodoFim, setPeriodoFim] = useState(somarDias(hoje, 6))
 
   const recursoAtual = useMemo(
     () => recursos.find((recurso) => recurso.id === recursoId),
     [recursos, recursoId]
   )
+
+  const projecao = useMemo(
+    () => calcularProjecao(recursoAtual, periodoInicio, periodoFim),
+    [recursoAtual, periodoInicio, periodoFim]
+  )
+
+  const totaisProjecao = useMemo(() => projecao.reduce(
+    (total, dia) => ({
+      minutosCalendario: total.minutosCalendario + dia.minutosCalendario,
+      minutosBloqueados: total.minutosBloqueados + dia.minutosBloqueados,
+      minutosDisponiveis: total.minutosDisponiveis + dia.minutosDisponiveis,
+      capacidadeDisponivel: total.capacidadeDisponivel + dia.capacidadeDisponivel
+    }),
+    { minutosCalendario: 0, minutosBloqueados: 0, minutosDisponiveis: 0, capacidadeDisponivel: 0 }
+  ), [projecao])
 
   async function carregar() {
     try {
@@ -401,6 +526,52 @@ export default function ConfiguracoesCapacidade() {
       )}
 
       {recursoAtual && (
+        <>
+        <section className="capacity-panel capacity-projection-panel">
+          <div className="capacity-panel-title capacity-projection-title">
+            <Calculator size={20} />
+            <div>
+              <h3>Projeção de capacidade disponível</h3>
+              <span>{recursoAtual.nome} · calendário, bloqueios e capacidade vigente</span>
+            </div>
+            <div className="capacity-period-filter">
+              <label>
+                De
+                <input type="date" value={periodoInicio} onChange={(e) => setPeriodoInicio(e.target.value)} />
+              </label>
+              <label>
+                Até
+                <input type="date" min={periodoInicio} value={periodoFim} onChange={(e) => setPeriodoFim(e.target.value)} />
+              </label>
+            </div>
+          </div>
+
+          <div className="capacity-projection-kpis">
+            <div><span>Calendário</span><strong>{(totaisProjecao.minutosCalendario / 60).toFixed(1)} h</strong></div>
+            <div><span>Bloqueios</span><strong>{(totaisProjecao.minutosBloqueados / 60).toFixed(1)} h</strong></div>
+            <div><span>Disponível</span><strong>{(totaisProjecao.minutosDisponiveis / 60).toFixed(1)} h</strong></div>
+            <div><span>Capacidade</span><strong>{totaisProjecao.capacidadeDisponivel.toFixed(2)} {projecao.find((dia) => dia.unidade !== '-')?.unidade || '-'}</strong></div>
+          </div>
+
+          <div className="table-wrapper">
+            <table className="capacity-projection-table">
+              <thead><tr><th>Data</th><th>Dia</th><th>Calendário</th><th>Bloqueado</th><th>Disponível</th><th>Capacidade</th></tr></thead>
+              <tbody>
+                {projecao.map((dia) => (
+                  <tr key={dia.data}>
+                    <td>{dia.data.split('-').reverse().join('/')}</td>
+                    <td>{dia.dia}</td>
+                    <td>{(dia.minutosCalendario / 60).toFixed(1)} h</td>
+                    <td>{(dia.minutosBloqueados / 60).toFixed(1)} h</td>
+                    <td>{(dia.minutosDisponiveis / 60).toFixed(1)} h</td>
+                    <td>{dia.configurado ? `${dia.capacidadeDisponivel.toFixed(2)} ${dia.unidade}` : 'Configuração incompleta'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
         <div className="capacity-config-grid">
           <form className="capacity-panel" onSubmit={salvarCapacidade}>
             <div className="capacity-panel-title">
@@ -567,6 +738,7 @@ export default function ConfiguracoesCapacidade() {
             </button>
           </form>
         </div>
+        </>
       )}
     </div>
   )
