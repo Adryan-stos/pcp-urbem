@@ -332,12 +332,34 @@ export default function ConfiguracoesCapacidade() {
   async function salvarCalendario(event) {
     event.preventDefault()
 
-    const diaInvalido = calendario.find(
+    const jornadaInvalida = calendario.find(
       (dia) => dia.ativo && (!dia.horaInicio || !dia.horaFim || dia.horaFim <= dia.horaInicio)
     )
 
-    if (diaInvalido) {
-      setErro(`Revise os horários de ${NOMES_DIAS[diaInvalido.diaSemana]}.`)
+    if (jornadaInvalida) {
+      setErro(`Em ${NOMES_DIAS[jornadaInvalida.diaSemana]}, o fim da jornada deve ser posterior ao início.`)
+      return
+    }
+
+    const intervaloIncompleto = calendario.find((dia) =>
+      dia.ativo && Boolean(dia.intervaloInicio) !== Boolean(dia.intervaloFim)
+    )
+
+    if (intervaloIncompleto) {
+      setErro(`Preencha o início e o fim do intervalo de ${NOMES_DIAS[intervaloIncompleto.diaSemana]}, ou deixe ambos vazios.`)
+      return
+    }
+
+    const intervaloInvalido = calendario.find((dia) =>
+      dia.ativo && dia.intervaloInicio && dia.intervaloFim && (
+        dia.intervaloFim <= dia.intervaloInicio ||
+        dia.intervaloInicio < dia.horaInicio ||
+        dia.intervaloFim > dia.horaFim
+      )
+    )
+
+    if (intervaloInvalido) {
+      setErro(`O intervalo de ${NOMES_DIAS[intervaloInvalido.diaSemana]} deve estar dentro da jornada e terminar após o início.`)
       return
     }
 
@@ -694,6 +716,13 @@ export default function ConfiguracoesCapacidade() {
             </div>
 
             <div className="capacity-calendar-list">
+              <div className="capacity-calendar-header" aria-hidden="true">
+                <span>Dia ativo</span>
+                <span>Início</span>
+                <span>Fim</span>
+                <span>Início intervalo</span>
+                <span>Fim intervalo</span>
+              </div>
               {calendario.map((dia, indice) => (
                 <div className={`capacity-calendar-row ${dia.ativo ? '' : 'inactive'}`} key={dia.diaSemana}>
                   <label className="capacity-day-check">
