@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { RefreshCw } from 'lucide-react'
+import { CalendarRange, ListOrdered, RefreshCw } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import {
   criarOPLote,
@@ -50,6 +50,10 @@ export default function CargaMaquina() {
   const [opLotes, setOpLotes] = useState([])
   const [modalOPLoteAberto, setModalOPLoteAberto] = useState(false)
   const [salvandoOPLote, setSalvandoOPLote] = useState(false)
+  const [visao, setVisao] = useState('fila')
+  const [recursosGantt, setRecursosGantt] = useState([])
+  const [processosGantt, setProcessosGantt] = useState([])
+  const [lotesGantt, setLotesGantt] = useState([])
 
   const setoresDaFabrica = fabricaAtual === 1 ? setoresFabrica1 : setoresFabrica2
 
@@ -144,10 +148,66 @@ async function carregarRecursosSetor() {
   }
 }
 
+async function carregarDadosGantt() {
+  try {
+    setCarregando(true)
+    setErro('')
+
+    const [recursosResultado, processosResultado, lotesResultado] = await Promise.all([
+      supabase
+        .from('recursos_produtivos')
+        .select(`
+          *, capacidades_recursos (*), calendarios_recursos (*), bloqueios_recursos (*)
+        `)
+        .eq('ativo', true)
+        .order('fabrica')
+        .order('processo')
+        .order('nome'),
+      supabase
+        .from('op_processos')
+        .select(`
+          *, ordens_producao (
+            id, numero_op, status, volume_m3,
+            itens_projeto (
+              codigo_interno_item, tipo_material,
+              projetos (codigo_interno, nome_projeto, cliente)
+            )
+          )
+        `)
+        .eq('ativo', true),
+      supabase
+        .from('op_lotes')
+        .select(`
+          *, op_lote_itens (
+            quantidade_prevista, volume_previsto_m3,
+            pacotes_materia_prima (codigo_pacote, especie, classe)
+          )
+        `)
+        .eq('ativo', true)
+    ])
+
+    if (recursosResultado.error) throw recursosResultado.error
+    if (processosResultado.error) throw processosResultado.error
+    if (lotesResultado.error) throw lotesResultado.error
+
+    setRecursosGantt(recursosResultado.data || [])
+    setProcessosGantt(processosResultado.data || [])
+    setLotesGantt(lotesResultado.data || [])
+  } catch (error) {
+    setErro(error.message)
+  } finally {
+    setCarregando(false)
+  }
+}
+
   useEffect(() => {
     carregarProcessos()
     carregarRecursosSetor()
 }, [setorAtual, fabricaAtual])
+
+  useEffect(() => {
+    if (visao === 'gantt') carregarDadosGantt()
+  }, [visao])
 
   const processosDoSetor = processos
     .filter((processo) => processo.processo === setorAtual || processo.recurso === setorAtual )
@@ -513,6 +573,35 @@ async function carregarRecursosSetor() {
 
     await reorganizarFilaOPLote(opLote, destino)
   }
+
+      if (visao === 'gantt') {
+        return (
+          <div className="page">
+            <header className="page-header">
+              <div>
+                <p className="eyebrow">Programação · Carga Máquina</p>
+                <h2>Gantt de Carga</h2>
+                <span>Capacidade, ocupação e programação por recurso produtivo.</span>
+              </div>
+              <button className="btn ghost" onClick={carregarDadosGantt} disabled={carregando}>
+                <RefreshCw size={16} /> Atualizar
+              </button>
+            </header>
+
+            <div className="machine-view-tabs">
+              <button type="button" onClick={() => setVisao('fila')}>
+                <ListOrdered size={16} /> Fila de programação
+              </button>
+              <button type="button" className="active">
+                <CalendarRange size={16} /> Gantt de carga
+              </button>
+            </div>
+
+            {erro && <div className="alert">{erro}</div>}
+            <GanttCargaMaquina recursos={recursosGantt} processos={processosGantt} opLotes={lotesGantt} />
+          </div>
+        )
+      }
       
       return (
         <div className="page">
@@ -530,6 +619,15 @@ async function carregarRecursosSetor() {
       </header>
 
       {erro && <div className="alert">{erro}</div>}
+
+      <div className="machine-view-tabs">
+        <button type="button" className="active">
+          <ListOrdered size={16} /> Fila de programação
+        </button>
+        <button type="button" onClick={() => setVisao('gantt')}>
+          <CalendarRange size={16} /> Gantt de carga
+        </button>
+      </div>
 
       <section className="machine-overview-panel">
         <div className="machine-overview-header">
@@ -616,11 +714,6 @@ async function carregarRecursosSetor() {
           <small>com itens no setor</small>
         </div>
       </section>
-      <GanttCargaMaquina
-        recursos={recursosSetor}
-        processos={processosDoSetor}
-        opLotes={opLotes}
-      />
       {ehFabrica1 ? (
         <PlannerFabrica1
           opLotes={opLotes}
