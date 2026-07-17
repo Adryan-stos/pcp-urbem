@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Plus, RefreshCw, Eye, ChevronDown, ChevronRight } from 'lucide-react'
+import { Plus, RefreshCw, ChevronDown, ChevronRight, Printer } from 'lucide-react'
 import { listarRecebimentos, criarRecebimento} from '../services/recebimentoService.js'
 import ModalRecebimento from '../components/Suprimentos/ModalSuprimento.jsx'
+import ModalEtiquetaRecebimento from '../components/Etiquetas/ModalEtiquetaRecebimento.jsx'
 
 
 export default function Recebimentos() {
@@ -12,6 +13,7 @@ export default function Recebimentos() {
   const [modalAberto, setModalAberto] = useState(false)
   const [salvando, setSalvando] = useState(false)
   const [recebimentoAbertoId, setRecebimentoAbertoId] = useState(null)
+  const [etiquetaSelecionada, setEtiquetaSelecionada] = useState(null)
 
   async function carregar() {
     try {
@@ -220,6 +222,14 @@ export default function Recebimentos() {
                                 <span>{Number(item.quantidade_saldo || 0).toFixed(0)} peças</span>
                                 <span>{Number(item.volume_saldo_m3 || 0).toFixed(4)} m³</span>
                                 <span>{item.buffer_atual || '-'} • Rua {item.rua || '-'} • Seção {item.secao || '-'}</span>
+                                <button
+                                  type="button"
+                                  className="btn ghost recebimento-etiqueta-btn"
+                                  onClick={() => setEtiquetaSelecionada({ pacote: item, recebimento })}
+                                >
+                                  <Printer size={15} />
+                                  Imprimir etiqueta
+                                </button>
                               </div>
                             ))}
                           </div>
@@ -241,6 +251,13 @@ export default function Recebimentos() {
           </table>
         </div>
       </section>
+
+      <ModalEtiquetaRecebimento
+        aberto={Boolean(etiquetaSelecionada)}
+        pacote={etiquetaSelecionada?.pacote}
+        recebimento={etiquetaSelecionada?.recebimento}
+        onFechar={() => setEtiquetaSelecionada(null)}
+      />
     </div>
   )
 }
