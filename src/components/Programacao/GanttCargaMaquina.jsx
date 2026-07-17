@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { CalendarRange, ChevronDown, ChevronRight, Filter } from 'lucide-react'
 import { calcularCapacidadePeriodo, formatarDataLocal, somarDias } from '../../utils/capacidadeDisponivel.js'
+import { obterSituacaoOperacao } from '../../utils/situacaoOperacao.js'
 
 const HORIZONTE_DIAS = 14
 
@@ -55,24 +56,6 @@ function normalizarOperacoes(processos, opLotes) {
   return [...projetos, ...lotes]
 }
 
-function situacaoOperacao(op) {
-  const texto = String(op.status || '').toLowerCase()
-  const concluida = texto.includes('conclu') || texto.includes('finaliz')
-  const emProducao = texto.includes('produção') || texto.includes('producao')
-  const emPausa = texto.includes('pausa')
-  const agora = Date.now()
-  const fimPrevistoVencido = op.fim && new Date(op.fim).getTime() < agora
-  const inicioPrevistoVencidoSemExecucao = !op.fim && op.inicio && new Date(op.inicio).getTime() < agora && !op.inicioReal
-  const iniciouSemEncerrarAposPrazo = Boolean(op.inicioReal && !op.fimReal && fimPrevistoVencido)
-  const atrasada = !concluida && (fimPrevistoVencido || inicioPrevistoVencidoSemExecucao || iniciouSemEncerrarAposPrazo)
-
-  if (concluida) return { classe: 'completed', rotulo: 'Concluída', atrasada: false }
-  if (emPausa) return { classe: atrasada ? 'late paused' : 'paused', rotulo: atrasada ? 'Em pausa · atrasada' : 'Em pausa', atrasada }
-  if (emProducao) return { classe: atrasada ? 'late production' : 'production', rotulo: atrasada ? 'Em produção · atrasada' : 'Em produção', atrasada }
-  if (atrasada) return { classe: 'late', rotulo: 'Atrasada', atrasada: true }
-  return { classe: 'scheduled', rotulo: op.status || 'Programada', atrasada: false }
-}
-
 export default function GanttCargaMaquina({ recursos, processos, opLotes, onAlterarInicio }) {
   const hoje = formatarDataLocal(new Date())
   const [inicio, setInicio] = useState(hoje)
@@ -120,9 +103,9 @@ export default function GanttCargaMaquina({ recursos, processos, opLotes, onAlte
   const saldo = capacidadeM3 - volumeProgramado
   const ocupacao = capacidadeM3 > 0 ? (volumeProgramado / capacidadeM3) * 100 : 0
   const statusDisponiveis = [...new Set(operacoes.filter((op) => op.status).map((op) => op.status))].sort()
-  const totalAtrasadas = operacoesFiltradas.filter((op) => situacaoOperacao(op).atrasada).length
-  const totalEmProducao = operacoesFiltradas.filter((op) => situacaoOperacao(op).classe.includes('production')).length
-  const totalEmPausa = operacoesFiltradas.filter((op) => situacaoOperacao(op).classe.includes('paused')).length
+  const totalAtrasadas = operacoesFiltradas.filter((op) => obterSituacaoOperacao(op).atrasada).length
+  const totalEmProducao = operacoesFiltradas.filter((op) => obterSituacaoOperacao(op).classe.includes('production')).length
+  const totalEmPausa = operacoesFiltradas.filter((op) => obterSituacaoOperacao(op).classe.includes('paused')).length
 
   function alternarRecurso(id) {
     setExpandidos((atual) => {
@@ -137,7 +120,7 @@ export default function GanttCargaMaquina({ recursos, processos, opLotes, onAlte
       <div className="machine-gantt-track">
         {dias.map((dia) => <span key={dia.data} className={`${dia.fimSemana ? 'weekend' : ''} ${dia.hoje ? 'today' : ''}`} />)}
         {operacoesLinha.filter((op) => op.inicio).map((op) => {
-          const situacao = situacaoOperacao(op)
+          const situacao = obterSituacaoOperacao(op)
           const originalInicio = new Date(op.inicio).getTime()
           const originalFim = op.fim ? new Date(op.fim).getTime() : originalInicio + 86400000
           if (originalFim <= inicioMs || originalInicio >= fimMs) return null
@@ -187,7 +170,7 @@ export default function GanttCargaMaquina({ recursos, processos, opLotes, onAlte
                     </div>
                     {aberto && ops.map((op) => (
                       <div className="machine-gantt-row machine-gantt-detail-row" key={op.id}>
-                        <div className="machine-gantt-resource"><span><strong>{op.titulo}</strong><small>{op.projeto} · {op.item}</small><small>{op.quantidade.toFixed(0)} un. · {op.volume.toFixed(2)} m³ · {op.inicio ? new Date(op.inicio).toLocaleString('pt-BR') : 'sem início'} → {op.fim ? new Date(op.fim).toLocaleString('pt-BR') : 'sem término'}</small><span className={`machine-gantt-status ${situacaoOperacao(op).classe}`}>{situacaoOperacao(op).rotulo}</span><label className="machine-gantt-start-edit">Início previsto<input type="datetime-local" value={op.inicio ? String(op.inicio).slice(0, 16) : ''} onChange={(e) => onAlterarInicio?.(op, e.target.value)} /></label></span></div>
+                        <div className="machine-gantt-resource"><span><strong>{op.titulo}</strong><small>{op.projeto} · {op.item}</small><small>{op.quantidade.toFixed(0)} un. · {op.volume.toFixed(2)} m³ · {op.inicio ? new Date(op.inicio).toLocaleString('pt-BR') : 'sem início'} → {op.fim ? new Date(op.fim).toLocaleString('pt-BR') : 'sem término'}</small><span className={`machine-gantt-status ${obterSituacaoOperacao(op).classe}`}>{obterSituacaoOperacao(op).rotulo}</span><label className="machine-gantt-start-edit">Início previsto<input type="datetime-local" value={op.inicio ? String(op.inicio).slice(0, 16) : ''} onChange={(e) => onAlterarInicio?.(op, e.target.value)} /></label></span></div>
                         {renderTrilha([op], 'Sem data prevista')}
                       </div>
                     ))}
