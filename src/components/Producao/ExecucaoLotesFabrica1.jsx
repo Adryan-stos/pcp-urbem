@@ -46,7 +46,7 @@ export default function ExecucaoLotesFabrica1({ processo = 'AUTOCLAVE', onExecut
             <article className={`execucao-lote-card ${situacao.classe}`} key={op.id}>
               <header>
                 <div>
-                  <span>Prioridade #{op.prioridade ?? '-'}</span>
+                  <span className="execucao-lote-prioridade">Prioridade #{op.prioridade == null ? '-' : Number(op.prioridade) + 1}</span>
                   <h4>{op.numero_op_lote}</h4>
                 </div>
                 <span className={`execucao-lote-status ${situacao.classe}`}>{situacao.rotulo}</span>
