@@ -3,6 +3,8 @@ import { CalendarRange, ListOrdered, RefreshCw } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import {
   criarOPLote,
+  editarMateriaisOPLote,
+  cancelarOPLote,
   listarOPLotesPorProcesso,
   reordenarOPLotes
 } from '../services/opLoteService.js'
@@ -51,6 +53,9 @@ export default function CargaMaquina() {
   const [linhaSobre, setLinhaSobre] = useState(null)
   const [opLotes, setOpLotes] = useState([])
   const [modalOPLoteAberto, setModalOPLoteAberto] = useState(false)
+  const [opLoteEdicao, setOpLoteEdicao] = useState(null)
+  const [opLoteCancelamento, setOpLoteCancelamento] = useState(null)
+  const [motivoCancelamento, setMotivoCancelamento] = useState('')
   const [salvandoOPLote, setSalvandoOPLote] = useState(false)
   const [visao, setVisao] = useState('fila')
   const [recursosGantt, setRecursosGantt] = useState([])
@@ -516,7 +521,13 @@ async function aplicarPlanejamento(operacao) {
         setSalvandoOPLote(true)
         setErro('')
 
-        await criarOPLote({
+        if (opLoteEdicao) {
+          await editarMateriaisOPLote(opLoteEdicao.id, dados.itens)
+          await aplicarPlanejamento({
+            tipo: 'lote', registroId: opLoteEdicao.id,
+            inicio: dados.dataPrevistaInicio, fim: dados.dataPrevistaFim
+          })
+        } else await criarOPLote({
           processo: setorAtual,
           prioridade: dados.prioridade,
           dataPrevistaInicio: dados.dataPrevistaInicio,
@@ -526,12 +537,24 @@ async function aplicarPlanejamento(operacao) {
         })
 
         setModalOPLoteAberto(false)
+        setOpLoteEdicao(null)
         await carregarProcessos()
       } catch (error) {
         setErro(error.message)
       } finally {
         setSalvandoOPLote(false)
       }
+    }
+
+    async function confirmarCancelamentoOPLote() {
+      if (!motivoCancelamento.trim()) { setErro('Informe o motivo do cancelamento.'); return }
+      try {
+        setErro('')
+        await cancelarOPLote(opLoteCancelamento.id, motivoCancelamento.trim())
+        setOpLoteCancelamento(null)
+        setMotivoCancelamento('')
+        await carregarProcessos()
+      } catch (error) { setErro(error.message) }
     }
       
     function selecionarFabrica(fabrica) {
@@ -769,6 +792,8 @@ async function aplicarPlanejamento(operacao) {
           alterarRecursoOPLote={alterarRecursoOPLote}
           alterarDataInicioOPLote={alterarDataInicioOPLote}
           onEditarPlanejamento={setOperacaoPlanejamento}
+          onEditarOPLote={(op) => { setOpLoteEdicao(op); setModalOPLoteAberto(true) }}
+          onCancelarOPLote={(op) => { setErro(''); setMotivoCancelamento(''); setOpLoteCancelamento(op) }}
         />
       ) : (
         <PlannerFabrica2
@@ -796,7 +821,8 @@ async function aplicarPlanejamento(operacao) {
           <ModalOPLote
             aberto={modalOPLoteAberto}
             processo={setorAtual}
-            onCancelar={() => setModalOPLoteAberto(false)}
+            opEdicao={opLoteEdicao}
+            onCancelar={() => { setModalOPLoteAberto(false); setOpLoteEdicao(null) }}
             onSalvar={salvarOPLote}
             carregando={salvandoOPLote}
           />
@@ -806,6 +832,20 @@ async function aplicarPlanejamento(operacao) {
             onCancelar={() => setOperacaoPlanejamento(null)}
             onAplicar={aplicarPlanejamento}
           />
+
+          {opLoteCancelamento && (
+            <div className="modal-overlay">
+              <div className="modal-card machine-cancel-modal">
+                <div className="op-modal-header"><div><span>Fábrica 1</span><h3>Cancelar OP de lote</h3></div></div>
+                <p>A OP <strong>{opLoteCancelamento.numero_op_lote}</strong> sairá da fila e suas reservas serão recalculadas. O histórico será preservado.</p>
+                <label>Motivo do cancelamento<textarea value={motivoCancelamento} onChange={(e) => setMotivoCancelamento(e.target.value)} rows="4" autoFocus /></label>
+                <div className="modal-actions">
+                  <button type="button" className="btn ghost" onClick={() => setOpLoteCancelamento(null)}>Voltar</button>
+                  <button type="button" className="btn danger" onClick={confirmarCancelamentoOPLote}>Confirmar cancelamento</button>
+                </div>
+              </div>
+            </div>
+          )}
 
         </div>
 
