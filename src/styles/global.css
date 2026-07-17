@@ -4960,6 +4960,50 @@ td {
   justify-content: flex-end;
 }
 
+.execucao-tempos-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.execucao-tempos-grid > div {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(220, 240, 245, 0.35);
+}
+
+.execucao-tempos-grid span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.execucao-tempos-grid strong {
+  color: var(--urbem-green);
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+.execucao-tempos-grid .parado {
+  background: #fff7ed;
+}
+
+.execucao-tempos-grid .parado strong {
+  color: #c2410c;
+}
+
+.execucao-tempos-grid .produtivo {
+  background: #f0fdf4;
+}
+
+.execucao-tempos-grid .produtivo strong {
+  color: #15803d;
+}
+
 .classificacao-modal {
   width: min(1180px, calc(100vw - 36px));
   max-height: calc(100vh - 36px);
@@ -5067,6 +5111,9 @@ td {
 }
 
 @media (max-width: 900px) {
+  .execucao-tempos-grid {
+    grid-template-columns: 1fr;
+  }
   .classificacao-saida-grid {
     grid-template-columns: repeat(2, 1fr);
   }
