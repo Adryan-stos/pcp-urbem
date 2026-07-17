@@ -13,6 +13,7 @@ export default function ValidacaoInicial({
 
 {
   const regra = VALIDACOES_PROCESSO[talao.processo] || { exigeQuantidade: false, exigeDimensao: true, loteEntrada: 'Talão Anterior' }
+  const ehLote = talao._tipo_operacao === 'lote'
 
   return (
     <section className="execucao-talao-card">
@@ -28,9 +29,9 @@ export default function ValidacaoInicial({
       </div>
 
       <div className="execucao-talao-grid">
-        <div><span>OP</span><strong>{talao.ordens_producao?.numero_op || '-'}</strong></div>
-        <div><span>Projeto</span><strong>{talao.ordens_producao?.itens_projeto?.projetos?.codigo_interno || '-'}</strong></div>
-        <div><span>Master</span><strong>{talao.ordens_producao?.itens_projeto?.codigo_interno_item || '-'}</strong></div>
+        <div><span>OP</span><strong>{ehLote ? talao.numero_op_lote : talao.ordens_producao?.numero_op || '-'}</strong></div>
+        <div><span>{ehLote ? 'Pacotes' : 'Projeto'}</span><strong>{ehLote ? (talao.op_lote_itens || []).length : talao.ordens_producao?.itens_projeto?.projetos?.codigo_interno || '-'}</strong></div>
+        <div><span>{ehLote ? 'Tipo' : 'Master'}</span><strong>{ehLote ? 'OP por lote' : talao.ordens_producao?.itens_projeto?.codigo_interno_item || '-'}</strong></div>
         <div><span>Processo</span><strong>{talao.sequencia} - {talao.processo}</strong></div>
         <div><span>Recurso</span><strong>{talao.recurso || '-'}</strong></div>
         <div><span>Status</span><strong>{talao.status}</strong></div>
@@ -57,10 +58,20 @@ export default function ValidacaoInicial({
 
       {podeExecutar && (
         <div className="execucao-validacao-card">
-          <h4>Validação inicial da peça</h4>
-          <span>Confirme as dimensões físicas antes de iniciar a produção.</span>
+          <h4>{ehLote ? 'Validação inicial da OP de lote' : 'Validação inicial da peça'}</h4>
+          <span>{ehLote ? 'Confirme o operador e os pacotes reservados antes de iniciar.' : 'Confirme as dimensões físicas antes de iniciar a produção.'}</span>
 
           <div className="execucao-validacao-grid">
+            {ehLote && (
+              <input
+                placeholder="Operador"
+                value={dadosInicio.operador || ''}
+                onChange={(e) => setDadosInicio({ ...dadosInicio, operador: e.target.value })}
+              />
+            )}
+
+            {!ehLote && (
+              <>
             <input
               type="number"
               placeholder="Espessura"
@@ -111,6 +122,8 @@ export default function ValidacaoInicial({
                 setDadosInicio({ ...dadosInicio, comprimentoInicio: e.target.value })
               }
             />
+              </>
+            )}
           </div>
 
           <textarea

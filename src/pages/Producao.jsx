@@ -35,6 +35,7 @@ export default function Producao() {
         </button>
       </div>
 
+
       {aba === 'centro' && (
         <CentroExecucao
           onExecutar={(numeroTalao) => {

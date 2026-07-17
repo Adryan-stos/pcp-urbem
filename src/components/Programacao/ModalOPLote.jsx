@@ -20,7 +20,8 @@ export default function ModalOPLote({
   processo,
   onCancelar,
   onSalvar,
-  carregando
+  carregando,
+  opEdicao = null
 }) {
   const [estoque, setEstoque] = useState([])
   const [erro, setErro] = useState('')
@@ -45,15 +46,23 @@ export default function ModalOPLote({
 
     let ativo = true
 
-    setDados(DADOS_INICIAIS)
-    setItensSelecionados({})
+    setDados(opEdicao ? {
+      prioridade: opEdicao.prioridade == null ? '' : String(Number(opEdicao.prioridade) + 1),
+      dataPrevistaInicio: opEdicao.data_prevista_inicio ? formatarDataLocal(new Date(opEdicao.data_prevista_inicio)) : '',
+      dataPrevistaFim: opEdicao.data_prevista_fim ? formatarDataLocal(new Date(opEdicao.data_prevista_fim)) : '',
+      observacao: opEdicao.observacao || ''
+    } : DADOS_INICIAIS)
+    setItensSelecionados(opEdicao ? Object.fromEntries((opEdicao.op_lote_itens || []).map((item) => [item.estoque_item_id, {
+      selecionado: true,
+      quantidade_prevista: String(Number(item.quantidade_prevista || 0))
+    }])) : {})
     setFiltrosEstoque(FILTROS_INICIAIS)
     setEstoque([])
 
     async function carregarEstoque() {
       try {
         setErro('')
-        const dadosEstoque = await listarEstoqueParaOPLote(processo)
+        const dadosEstoque = await listarEstoqueParaOPLote(processo, opEdicao)
         if (ativo) setEstoque(dadosEstoque)
       } catch (error) {
         if (ativo) setErro(error.message)
@@ -65,7 +74,7 @@ export default function ModalOPLote({
     return () => {
       ativo = false
     }
-  }, [aberto, processo])
+  }, [aberto, processo, opEdicao])
 
   function alterarItem(itemId, campo, valor) {
     setItensSelecionados((atuais) => ({
@@ -217,7 +226,7 @@ export default function ModalOPLote({
         <div className="op-modal-header">
           <div>
             <span>Fábrica 1</span>
-            <h3>Nova OP de Lote - {processo}</h3>
+            <h3>{opEdicao ? 'Editar OP de Lote' : 'Nova OP de Lote'} - {processo}</h3>
           </div>
 
           <button type="button" className="btn ghost" onClick={onCancelar}>

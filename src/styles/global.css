@@ -4880,3 +4880,325 @@ td {
     page-break-inside: avoid;
   }
 }
+
+/* =========================================================
+   EXECUÇÃO DE OPs DE LOTE E CLASSIFICAÇÃO
+   ========================================================= */
+
+.execucao-lotes-f1 {
+  display: grid;
+  gap: 20px;
+}
+
+.execucao-lotes-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.execucao-lote-card {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 10px 28px rgba(20, 85, 80, 0.07);
+}
+
+.execucao-lote-card.production { border-color: #1684c7; box-shadow: 0 10px 28px rgba(22, 132, 199, 0.16); }
+.execucao-lote-card.paused { border-color: #c58b12; box-shadow: 0 10px 28px rgba(197, 139, 18, 0.16); }
+.execucao-lote-card.late { border-color: #c83b3b; box-shadow: 0 10px 28px rgba(200, 59, 59, 0.17); }
+.execucao-lote-card.upcoming { border-color: #8b67c7; box-shadow: 0 10px 28px rgba(139, 103, 199, 0.16); }
+.execucao-lote-card.scheduled { border-color: #27a768; }
+
+.execucao-lote-status {
+  width: fit-content;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #eaf3f2;
+  color: var(--urbem-green);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.execucao-lote-status.production { background: #e5f3ff; color: #0867a8; }
+.execucao-lote-status.paused { background: #fff3d5; color: #895d00; }
+.execucao-lote-status.late { background: #ffe8e8; color: #a12424; }
+.execucao-lote-status.upcoming { background: #f0eaff; color: #624099; }
+.execucao-lote-status.scheduled { background: #e4f7ec; color: #17683e; }
+
+.execucao-lote-card.paused,
+.execucao-lote-card.late {
+  animation: operacao-atencao 1.8s ease-in-out infinite;
+}
+
+.execucao-lote-card.paused { --attention-ring: rgba(197, 139, 18, 0.15); }
+.execucao-lote-card.late { --attention-ring: rgba(200, 59, 59, 0.13); }
+
+@keyframes operacao-atencao {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.012); box-shadow: 0 0 0 5px var(--attention-ring); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .execucao-lote-card.paused,
+  .execucao-lote-card.late { animation: none; }
+}
+
+@media (max-width: 1500px) {
+  .execucao-lotes-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 980px) {
+  .execucao-lotes-grid { grid-template-columns: 1fr; }
+}
+
+.machine-gantt-zoom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.machine-gantt-zoom select { min-width: 105px; }
+
+.machine-cancel-modal { max-width: 520px; display: grid; gap: 18px; }
+.machine-cancel-modal label { display: grid; gap: 8px; font-weight: 800; }
+.machine-cancel-modal textarea { width: 100%; resize: vertical; }
+
+.execucao-lote-card > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.execucao-lote-card header span,
+.execucao-lote-resumo span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.execucao-lote-card h4 {
+  margin: 5px 0 0;
+  color: var(--urbem-green);
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+
+.execucao-lote-prioridade {
+  display: inline-flex;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: var(--urbem-green);
+  color: #fff !important;
+  font-size: 11px !important;
+  font-weight: 900;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+
+.execucao-lote-resumo {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.execucao-lote-resumo > div {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(220, 240, 245, 0.45);
+}
+
+.execucao-lote-pacotes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.execucao-lote-pacotes span {
+  padding: 6px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--urbem-green);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.execucao-lote-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.execucao-tempos-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.execucao-tempos-grid > div {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(220, 240, 245, 0.35);
+}
+
+.execucao-tempos-grid span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.execucao-tempos-grid strong {
+  color: var(--urbem-green);
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+.execucao-tempos-grid .parado {
+  background: #fff7ed;
+}
+
+.execucao-tempos-grid .parado strong {
+  color: #c2410c;
+}
+
+.execucao-tempos-grid .produtivo {
+  background: #f0fdf4;
+}
+
+.execucao-tempos-grid .produtivo strong {
+  color: #15803d;
+}
+
+.classificacao-modal {
+  width: min(1180px, calc(100vw - 36px));
+  max-height: calc(100vh - 36px);
+  overflow: auto;
+}
+
+.classificacao-operador {
+  display: grid;
+  gap: 7px;
+  margin: 18px 0;
+  color: var(--urbem-green);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.classificacao-pacotes {
+  display: grid;
+  gap: 16px;
+}
+
+.classificacao-pacote {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(220, 240, 245, 0.22);
+}
+
+.classificacao-pacote > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.classificacao-pacote > header > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.classificacao-pacote header span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.classificacao-saldo {
+  display: grid;
+  gap: 2px;
+  min-width: 130px;
+  padding: 8px 11px;
+  border-radius: 12px;
+  text-align: right;
+}
+
+.classificacao-saldo.ok {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.classificacao-saldo.pendente {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.classificacao-saida-grid,
+.classificacao-saida-legenda {
+  display: grid;
+  grid-template-columns: 1.3fr repeat(3, minmax(105px, 0.7fr)) minmax(105px, 0.7fr) 42px;
+  gap: 8px;
+}
+
+.classificacao-saida-legenda {
+  padding: 0 2px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.classificacao-saida-grid {
+  margin-top: 8px;
+}
+
+.classificacao-saida-grid input,
+.classificacao-saida-grid select {
+  min-width: 0;
+  padding: 10px;
+  border-radius: 11px;
+}
+
+.classificacao-pacote-actions {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.classificacao-pacote-actions label {
+  display: grid;
+  gap: 5px;
+  width: 130px;
+  color: var(--urbem-green);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+@media (max-width: 900px) {
+  .execucao-tempos-grid {
+    grid-template-columns: 1fr;
+  }
+  .classificacao-saida-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .classificacao-saida-legenda {
+    display: none;
+  }
+
+  .classificacao-saida-grid .icon-button {
+    justify-self: end;
+  }
+}

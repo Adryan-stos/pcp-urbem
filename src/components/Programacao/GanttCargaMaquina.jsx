@@ -3,8 +3,6 @@ import { CalendarRange, ChevronDown, ChevronRight, Filter } from 'lucide-react'
 import { calcularCapacidadePeriodo, formatarDataLocal, somarDias } from '../../utils/capacidadeDisponivel.js'
 import { obterSituacaoOperacao } from '../../utils/situacaoOperacao.js'
 
-const HORIZONTE_DIAS = 14
-
 function normalizarOperacoes(processos, opLotes) {
   const projetos = processos.map((processo) => {
     const item = processo.ordens_producao?.itens_projeto
@@ -64,8 +62,9 @@ export default function GanttCargaMaquina({ recursos, processos, opLotes, onEdit
   const [recursoId, setRecursoId] = useState('')
   const [status, setStatus] = useState('')
   const [busca, setBusca] = useState('')
+  const [horizonteDias, setHorizonteDias] = useState(3)
   const [expandidos, setExpandidos] = useState(new Set())
-  const fim = somarDias(inicio, HORIZONTE_DIAS - 1)
+  const fim = somarDias(inicio, horizonteDias - 1)
   const operacoes = useMemo(() => normalizarOperacoes(processos, opLotes), [processos, opLotes])
   const processosDisponiveis = [...new Set(recursos.filter((r) => String(r.fabrica) === fabrica).map((r) => r.processo))].sort()
   const recursosFiltrados = recursos.filter((recurso) =>
@@ -74,7 +73,7 @@ export default function GanttCargaMaquina({ recursos, processos, opLotes, onEdit
     (!recursoId || recurso.id === recursoId)
   )
   const recursosDoProcesso = recursos.filter((r) => String(r.fabrica) === fabrica && (!processo || r.processo === processo))
-  const dias = Array.from({ length: HORIZONTE_DIAS }, (_, indice) => {
+  const dias = Array.from({ length: horizonteDias }, (_, indice) => {
     const data = somarDias(inicio, indice)
     const objeto = new Date(`${data}T00:00:00`)
     return {
@@ -152,6 +151,15 @@ export default function GanttCargaMaquina({ recursos, processos, opLotes, onEdit
         <section className="machine-gantt-card">
           <div className="machine-gantt-header">
             <div><span>Planejamento visual</span><h3><CalendarRange size={19} /> Gantt de carga por máquina</h3><small>{inicio.split('-').reverse().join('/')} a {fim.split('-').reverse().join('/')}</small></div>
+            <label className="machine-gantt-zoom">Zoom
+              <select value={horizonteDias} onChange={(e) => setHorizonteDias(Number(e.target.value))}>
+                <option value="1">1 dia</option>
+                <option value="3">3 dias</option>
+                <option value="7">7 dias</option>
+                <option value="14">14 dias</option>
+                <option value="30">30 dias</option>
+              </select>
+            </label>
           </div>
           <div className="machine-gantt-scroll">
             <div className="machine-gantt-grid">

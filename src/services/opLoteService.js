@@ -3,6 +3,7 @@ import {
   obterBuffersEntrada,
   normalizarProcesso
 } from './processoEstoqueService.js'
+import { datetimeLocalParaIso } from '../utils/datasPlanejamento.js'
 
 export async function listarOPLotesPorProcesso(processo) {
   const processoNormalizado = normalizarProcesso(processo)
@@ -32,7 +33,7 @@ export async function listarOPLotesPorProcesso(processo) {
   return data || []
 }
 
-export async function listarEstoqueParaOPLote(processo) {
+export async function listarEstoqueParaOPLote(processo, opLote = null) {
   const buffersEntrada = obterBuffersEntrada(processo)
 
   if (!buffersEntrada.length) return []
@@ -55,15 +56,20 @@ export async function listarEstoqueParaOPLote(processo) {
 
   if (error) throw error
 
+  const reservasDaOp = new Map((opLote?.op_lote_itens || []).map((item) => [
+    item.estoque_item_id,
+    { quantidade: Number(item.quantidade_prevista || 0), volume: Number(item.volume_previsto_m3 || 0) }
+  ]))
+
   return (data || [])
     .map((item) => ({
       ...item,
       quantidade_disponivel: Math.max(
-        Number(item.quantidade_saldo || 0) - Number(item.quantidade_reservada || 0),
+        Number(item.quantidade_saldo || 0) - Number(item.quantidade_reservada || 0) + Number(reservasDaOp.get(item.id)?.quantidade || 0),
         0
       ),
       volume_disponivel_m3: Math.max(
-        Number(item.volume_saldo_m3 || 0) - Number(item.volume_reservado_m3 || 0),
+        Number(item.volume_saldo_m3 || 0) - Number(item.volume_reservado_m3 || 0) + Number(reservasDaOp.get(item.id)?.volume || 0),
         0
       )
     }))
@@ -90,8 +96,8 @@ export async function criarOPLote({
     {
       p_processo: normalizarProcesso(processo),
       p_prioridade: prioridade,
-      p_data_prevista_inicio: dataPrevistaInicio,
-      p_data_prevista_fim: dataPrevistaFim,
+      p_data_prevista_inicio: datetimeLocalParaIso(dataPrevistaInicio),
+      p_data_prevista_fim: datetimeLocalParaIso(dataPrevistaFim),
       p_observacao: observacao,
       p_itens: itens.map((item) => ({
         estoque_item_id: item.estoque_item_id,
@@ -112,4 +118,25 @@ export async function reordenarOPLotes(processo, opLoteIds) {
   })
 
   if (error) throw error
+}
+
+export async function editarMateriaisOPLote(opLoteId, itens) {
+  const { data, error } = await supabase.rpc('editar_materiais_op_lote', {
+    p_op_lote_id: opLoteId,
+    p_itens: itens.map((item) => ({
+      estoque_item_id: item.estoque_item_id,
+      quantidade_prevista: Number(item.quantidade_prevista || 0)
+    }))
+  })
+  if (error) throw error
+  return data
+}
+
+export async function cancelarOPLote(opLoteId, motivo) {
+  const { data, error } = await supabase.rpc('cancelar_op_lote', {
+    p_op_lote_id: opLoteId,
+    p_motivo: motivo
+  })
+  if (error) throw error
+  return data
 }

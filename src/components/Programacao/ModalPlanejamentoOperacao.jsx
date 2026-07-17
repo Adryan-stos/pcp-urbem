@@ -1,22 +1,17 @@
 import { useEffect, useState } from 'react'
 import { CalendarClock, X } from 'lucide-react'
-
-function agoraLocal() {
-  const data = new Date()
-  data.setMinutes(data.getMinutes() - data.getTimezoneOffset())
-  return data.toISOString().slice(0, 16)
-}
+import { agoraDatetimeLocal, isoParaDatetimeLocal } from '../../utils/datasPlanejamento.js'
 
 export default function ModalPlanejamentoOperacao({ operacao, onCancelar, onAplicar }) {
   const [inicio, setInicio] = useState('')
   const [fim, setFim] = useState('')
   const [erro, setErro] = useState('')
   const [salvando, setSalvando] = useState(false)
-  const minimo = agoraLocal()
+  const minimo = agoraDatetimeLocal()
 
   useEffect(() => {
-    setInicio(operacao?.inicio ? String(operacao.inicio).slice(0, 16) : '')
-    setFim(operacao?.fim ? String(operacao.fim).slice(0, 16) : '')
+    setInicio(isoParaDatetimeLocal(operacao?.inicio))
+    setFim(isoParaDatetimeLocal(operacao?.fim))
     setErro('')
   }, [operacao])
 
