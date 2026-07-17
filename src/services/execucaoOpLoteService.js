@@ -12,7 +12,7 @@ export async function listarOPLotesExecucao(processo = 'CLASSIFICADORA') {
     `)
     .eq('ativo', true)
     .eq('processo', processo)
-    .in('status', ['Programado', 'Em produção', 'Aguardando programação'])
+    .in('status', ['Programado', 'Em produção', 'Em pausa', 'Aguardando programação'])
     .order('prioridade', { ascending: true, nullsFirst: false })
     .order('created_at', { ascending: true })
 
