@@ -56,7 +56,7 @@ function normalizarOperacoes(processos, opLotes) {
   return [...projetos, ...lotes]
 }
 
-export default function GanttCargaMaquina({ recursos, processos, opLotes, onAlterarInicio }) {
+export default function GanttCargaMaquina({ recursos, processos, opLotes, onEditarPlanejamento }) {
   const hoje = formatarDataLocal(new Date())
   const [inicio, setInicio] = useState(hoje)
   const [fabrica, setFabrica] = useState('1')
@@ -170,7 +170,7 @@ export default function GanttCargaMaquina({ recursos, processos, opLotes, onAlte
                     </div>
                     {aberto && ops.map((op) => (
                       <div className="machine-gantt-row machine-gantt-detail-row" key={op.id}>
-                        <div className="machine-gantt-resource"><span><strong>{op.titulo}</strong><small>{op.projeto} · {op.item}</small><small>{op.quantidade.toFixed(0)} un. · {op.volume.toFixed(2)} m³ · {op.inicio ? new Date(op.inicio).toLocaleString('pt-BR') : 'sem início'} → {op.fim ? new Date(op.fim).toLocaleString('pt-BR') : 'sem término'}</small><span className={`machine-gantt-status ${obterSituacaoOperacao(op).classe}`}>{obterSituacaoOperacao(op).rotulo}</span><label className="machine-gantt-start-edit">Início previsto<input type="datetime-local" value={op.inicio ? String(op.inicio).slice(0, 16) : ''} onChange={(e) => onAlterarInicio?.(op, e.target.value)} /></label></span></div>
+                        <div className="machine-gantt-resource"><span><strong>{op.titulo}</strong><small>{op.projeto} · {op.item}</small><small>{op.quantidade.toFixed(0)} un. · {op.volume.toFixed(2)} m³ · {op.inicio ? new Date(op.inicio).toLocaleString('pt-BR') : 'sem início'} → {op.fim ? new Date(op.fim).toLocaleString('pt-BR') : 'sem término'}</small><span className={`machine-gantt-status ${obterSituacaoOperacao(op).classe}`}>{obterSituacaoOperacao(op).rotulo}</span><button type="button" className="machine-planning-date-button" onClick={() => onEditarPlanejamento?.(op)}>Alterar início e término</button></span></div>
                         {renderTrilha([op], 'Sem data prevista')}
                       </div>
                     ))}
