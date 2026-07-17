@@ -45,7 +45,9 @@ export default function ModalEtiquetaRecebimento({ aberto, pacote, recebimento, 
         <div className="etiqueta-preview">
           <article className="etiqueta-print-area etiqueta-recebimento">
             <header className="etiqueta-cabecalho">
-              <div className="etiqueta-marca">urbem</div>
+              <div className="etiqueta-marca">
+                <img src="/Urbem.200730.Logomarca_RGB-01.png" alt="Urbem" />
+              </div>
               <div>
                 <strong>MATÉRIA-PRIMA</strong>
                 <span>RECEBIMENTO</span>
