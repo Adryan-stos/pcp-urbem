@@ -10,6 +10,7 @@ import ModalOPLote from '../components/Programacao/ModalOPLote.jsx'
 import PlannerFabrica1 from '../components/Programacao/PlannerFabrica1.jsx'
 import PlannerFabrica2 from '../components/Programacao/PlannerFabrica2.jsx'
 import GanttCargaMaquina from '../components/Programacao/GanttCargaMaquina.jsx'
+import ModalPlanejamentoOperacao from '../components/Programacao/ModalPlanejamentoOperacao.jsx'
 
 const setoresFabrica1 = [
   { id: 'AUTOCLAVE', label: 'Autoclave', fabrica: 1, tipoOP: 'lote' },
@@ -54,6 +55,7 @@ export default function CargaMaquina() {
   const [recursosGantt, setRecursosGantt] = useState([])
   const [processosGantt, setProcessosGantt] = useState([])
   const [lotesGantt, setLotesGantt] = useState([])
+  const [operacaoPlanejamento, setOperacaoPlanejamento] = useState(null)
 
   const setoresDaFabrica = fabricaAtual === 1 ? setoresFabrica1 : setoresFabrica2
 
@@ -200,20 +202,21 @@ async function carregarDadosGantt() {
   }
 }
 
-async function alterarInicioGantt(operacao, dataInicio) {
-  try {
-    setErro('')
-    const tabela = operacao.tipo === 'lote' ? 'op_lotes' : 'op_processos'
-    const { error } = await supabase
-      .from(tabela)
-      .update({ data_prevista_inicio: dataInicio || null })
-      .eq('id', operacao.registroId)
+async function aplicarPlanejamento(operacao) {
+  const tabela = operacao.tipo === 'lote' ? 'op_lotes' : 'op_processos'
+  const { error } = await supabase
+    .from(tabela)
+    .update({
+      data_prevista_inicio: operacao.inicio,
+      data_prevista_fim: operacao.fim
+    })
+    .eq('id', operacao.registroId)
 
-    if (error) throw error
-    await carregarDadosGantt()
-  } catch (error) {
-    setErro(error.message)
-  }
+  if (error) throw error
+
+  setOperacaoPlanejamento(null)
+  if (visao === 'gantt') await carregarDadosGantt()
+  else await carregarProcessos()
 }
 
   useEffect(() => {
@@ -632,7 +635,12 @@ async function alterarInicioGantt(operacao, dataInicio) {
               recursos={recursosGantt}
               processos={processosGantt}
               opLotes={lotesGantt}
-              onAlterarInicio={alterarInicioGantt}
+              onEditarPlanejamento={setOperacaoPlanejamento}
+            />
+            <ModalPlanejamentoOperacao
+              operacao={operacaoPlanejamento}
+              onCancelar={() => setOperacaoPlanejamento(null)}
+              onAplicar={aplicarPlanejamento}
             />
           </div>
         )
@@ -761,6 +769,7 @@ async function alterarInicioGantt(operacao, dataInicio) {
           recursosSetor={recursosSetor}
           alterarRecursoOPLote={alterarRecursoOPLote}
           alterarDataInicioOPLote={alterarDataInicioOPLote}
+          onEditarPlanejamento={setOperacaoPlanejamento}
         />
       ) : (
         <PlannerFabrica2
@@ -777,6 +786,7 @@ async function alterarInicioGantt(operacao, dataInicio) {
           soltarNaPosicao={soltarNaPosicao}
           finalizarArraste={finalizarArraste}
           alterarDataInicio={alterarDataInicio}
+          onEditarPlanejamento={setOperacaoPlanejamento}
           alterarStatusPCP={alterarStatusPCP}
           moverPrioridade={moverPrioridade}
           recursosSetor={recursosSetor}
@@ -790,6 +800,12 @@ async function alterarInicioGantt(operacao, dataInicio) {
             onCancelar={() => setModalOPLoteAberto(false)}
             onSalvar={salvarOPLote}
             carregando={salvandoOPLote}
+          />
+
+          <ModalPlanejamentoOperacao
+            operacao={operacaoPlanejamento}
+            onCancelar={() => setOperacaoPlanejamento(null)}
+            onAplicar={aplicarPlanejamento}
           />
 
         </div>
