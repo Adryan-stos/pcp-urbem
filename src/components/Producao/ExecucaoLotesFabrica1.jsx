@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { listarOPLotesExecucao } from '../../services/execucaoOpLoteService.js'
+import { obterSituacaoOperacao } from '../../utils/situacaoOperacao.js'
 
 export default function ExecucaoLotesFabrica1({ processo = 'AUTOCLAVE', onExecutar }) {
   const [ops, setOps] = useState([])
@@ -37,17 +38,18 @@ export default function ExecucaoLotesFabrica1({ processo = 'AUTOCLAVE', onExecut
 
       <div className="execucao-lotes-grid">
         {ops.map((op) => {
+          const situacao = obterSituacaoOperacao(op)
           const itens = (op.op_lote_itens || []).filter((item) => ['Reservado', 'Processado'].includes(item.status))
           const quantidade = itens.reduce((total, item) => total + Number(item.quantidade_prevista || 0), 0)
           const volume = itens.reduce((total, item) => total + Number(item.volume_previsto_m3 || 0), 0)
           return (
-            <article className="execucao-lote-card" key={op.id}>
+            <article className={`execucao-lote-card ${situacao.classe}`} key={op.id}>
               <header>
                 <div>
                   <span>Prioridade #{op.prioridade ?? '-'}</span>
                   <h4>{op.numero_op_lote}</h4>
                 </div>
-                <span className={`op-status ${op.status === 'Em produção' ? 'em-producao' : 'programado'}`}>{op.status}</span>
+                <span className={`execucao-lote-status ${situacao.classe}`}>{situacao.rotulo}</span>
               </header>
               <div className="execucao-lote-resumo">
                 <div><span>Pacotes</span><strong>{itens.length}</strong></div>
