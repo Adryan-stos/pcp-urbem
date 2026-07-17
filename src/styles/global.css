@@ -4052,6 +4052,170 @@ td {
   font-weight: 800;
 }
 
+/* ==================================================
+   GANTT DE CARGA MÁQUINA
+================================================== */
+.machine-gantt-card {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: #fff;
+}
+
+.machine-gantt-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: end;
+}
+
+.machine-gantt-header span,
+.machine-gantt-header small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.machine-gantt-header h3 {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 3px 0;
+  color: var(--urbem-green);
+}
+
+.machine-gantt-header label {
+  display: grid;
+  gap: 5px;
+  min-width: 170px;
+  color: var(--urbem-green);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.machine-gantt-scroll {
+  overflow-x: auto;
+}
+
+.machine-gantt-grid {
+  min-width: 940px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.machine-gantt-corner,
+.machine-gantt-resource {
+  width: 260px;
+  padding: 11px 13px;
+  border-right: 1px solid var(--border);
+}
+
+.machine-gantt-corner {
+  background: #edf7f5;
+  color: var(--urbem-green);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.machine-gantt-days {
+  display: grid;
+  grid-template-columns: repeat(14, 1fr);
+  margin-left: 260px;
+  margin-top: -37px;
+  min-height: 37px;
+}
+
+.machine-gantt-days span {
+  display: grid;
+  place-items: center;
+  border-right: 1px solid var(--border);
+  background: #f7fbfa;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.machine-gantt-days span.weekend,
+.machine-gantt-track > span.weekend {
+  background: #f2f0e5;
+}
+
+.machine-gantt-row {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 68px;
+  border-top: 1px solid var(--border);
+}
+
+.machine-gantt-resource {
+  display: grid;
+  align-content: center;
+  gap: 4px;
+}
+
+.machine-gantt-resource strong {
+  color: var(--urbem-green);
+}
+
+.machine-gantt-resource small {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.machine-gantt-track {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(14, 1fr);
+  overflow: hidden;
+}
+
+.machine-gantt-track > span {
+  border-right: 1px solid rgba(20, 85, 80, .1);
+}
+
+.machine-gantt-track em {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 11px;
+  font-style: normal;
+}
+
+.machine-gantt-bar {
+  position: absolute;
+  top: 17px;
+  z-index: 2;
+  min-width: 22px;
+  padding: 8px 9px;
+  overflow: hidden;
+  border-radius: 9px;
+  background: var(--urbem-green);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.machine-gantt-empty {
+  padding: 28px;
+  color: var(--muted);
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .machine-gantt-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
 @media (max-width: 1100px) {
   .capacity-resource-grid {
     grid-template-columns: repeat(2, minmax(180px, 1fr));
