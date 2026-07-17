@@ -203,14 +203,12 @@ async function carregarDadosGantt() {
 }
 
 async function aplicarPlanejamento(operacao) {
-  const tabela = operacao.tipo === 'lote' ? 'op_lotes' : 'op_processos'
-  const { error } = await supabase
-    .from(tabela)
-    .update({
-      data_prevista_inicio: operacao.inicio,
-      data_prevista_fim: operacao.fim
-    })
-    .eq('id', operacao.registroId)
+  const { error } = await supabase.rpc('atualizar_planejamento_e_reordenar', {
+    p_tipo: operacao.tipo,
+    p_id: operacao.registroId,
+    p_inicio: operacao.inicio,
+    p_fim: operacao.fim
+  })
 
   if (error) throw error
 
