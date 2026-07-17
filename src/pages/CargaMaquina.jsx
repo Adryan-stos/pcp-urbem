@@ -9,6 +9,7 @@ import {
 import ModalOPLote from '../components/Programacao/ModalOPLote.jsx'
 import PlannerFabrica1 from '../components/Programacao/PlannerFabrica1.jsx'
 import PlannerFabrica2 from '../components/Programacao/PlannerFabrica2.jsx'
+import GanttCargaMaquina from '../components/Programacao/GanttCargaMaquina.jsx'
 
 const setoresFabrica1 = [
   { id: 'AUTOCLAVE', label: 'Autoclave', fabrica: 1, tipoOP: 'lote' },
@@ -124,7 +125,12 @@ async function carregarRecursosSetor() {
   try {
     const { data, error } = await supabase
       .from('recursos_produtivos')
-      .select('id, codigo, nome, fabrica, processo, tipo_recurso')
+      .select(`
+        id, codigo, nome, fabrica, processo, tipo_recurso, quantidade_recursos,
+        capacidades_recursos (*),
+        calendarios_recursos (*),
+        bloqueios_recursos (*)
+      `)
       .eq('fabrica', fabricaAtual)
       .eq('processo', setorAtual)
       .eq('ativo', true)
@@ -610,6 +616,11 @@ async function carregarRecursosSetor() {
           <small>com itens no setor</small>
         </div>
       </section>
+      <GanttCargaMaquina
+        recursos={recursosSetor}
+        processos={processosDoSetor}
+        opLotes={opLotes}
+      />
       {ehFabrica1 ? (
         <PlannerFabrica1
           opLotes={opLotes}
