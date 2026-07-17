@@ -4892,7 +4892,7 @@ td {
 
 .execucao-lotes-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 18px;
 }
 
@@ -4929,6 +4929,47 @@ td {
 .execucao-lote-status.upcoming { background: #f0eaff; color: #624099; }
 .execucao-lote-status.scheduled { background: #e4f7ec; color: #17683e; }
 
+.execucao-lote-card.paused,
+.execucao-lote-card.late {
+  animation: operacao-atencao 1.8s ease-in-out infinite;
+}
+
+.execucao-lote-card.paused { --attention-ring: rgba(197, 139, 18, 0.15); }
+.execucao-lote-card.late { --attention-ring: rgba(200, 59, 59, 0.13); }
+
+@keyframes operacao-atencao {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.012); box-shadow: 0 0 0 5px var(--attention-ring); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .execucao-lote-card.paused,
+  .execucao-lote-card.late { animation: none; }
+}
+
+@media (max-width: 1500px) {
+  .execucao-lotes-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 980px) {
+  .execucao-lotes-grid { grid-template-columns: 1fr; }
+}
+
+.machine-gantt-zoom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.machine-gantt-zoom select { min-width: 105px; }
+
+.machine-cancel-modal { max-width: 520px; display: grid; gap: 18px; }
+.machine-cancel-modal label { display: grid; gap: 8px; font-weight: 800; }
+.machine-cancel-modal textarea { width: 100%; resize: vertical; }
+
 .execucao-lote-card > header {
   display: flex;
   align-items: flex-start;
@@ -4947,6 +4988,18 @@ td {
   color: var(--urbem-green);
   font-size: 18px;
   overflow-wrap: anywhere;
+}
+
+.execucao-lote-prioridade {
+  display: inline-flex;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: var(--urbem-green);
+  color: #fff !important;
+  font-size: 11px !important;
+  font-weight: 900;
+  letter-spacing: .03em;
+  text-transform: uppercase;
 }
 
 .execucao-lote-resumo {
