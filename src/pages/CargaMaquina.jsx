@@ -11,6 +11,7 @@ import PlannerFabrica1 from '../components/Programacao/PlannerFabrica1.jsx'
 import PlannerFabrica2 from '../components/Programacao/PlannerFabrica2.jsx'
 import GanttCargaMaquina from '../components/Programacao/GanttCargaMaquina.jsx'
 import ModalPlanejamentoOperacao from '../components/Programacao/ModalPlanejamentoOperacao.jsx'
+import { datetimeLocalParaIso } from '../utils/datasPlanejamento.js'
 
 const setoresFabrica1 = [
   { id: 'AUTOCLAVE', label: 'Autoclave', fabrica: 1, tipoOP: 'lote' },
@@ -206,8 +207,8 @@ async function aplicarPlanejamento(operacao) {
   const { error } = await supabase.rpc('atualizar_planejamento_e_reordenar', {
     p_tipo: operacao.tipo,
     p_id: operacao.registroId,
-    p_inicio: operacao.inicio,
-    p_fim: operacao.fim
+    p_inicio: datetimeLocalParaIso(operacao.inicio),
+    p_fim: datetimeLocalParaIso(operacao.fim)
   })
 
   if (error) throw error
