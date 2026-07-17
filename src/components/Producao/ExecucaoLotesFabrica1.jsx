@@ -2,24 +2,27 @@ import { useEffect, useState } from 'react'
 import { Play, RefreshCw, Tags } from 'lucide-react'
 import {
   finalizarClassificacaoOPLote,
+  finalizarEtapaOPLote,
   iniciarExecucaoOPLote,
   listarOPLotesExecucao
 } from '../../services/execucaoOpLoteService.js'
 import ModalClassificacaoLote from './ModalClassificacaoLote.jsx'
 import ModalEtiquetasClassificacao from '../Etiquetas/ModalEtiquetasClassificacao.jsx'
+import ModalFinalizacaoEtapaLote from './ModalFinalizacaoEtapaLote.jsx'
 
-export default function ExecucaoLotesFabrica1() {
+export default function ExecucaoLotesFabrica1({ processo = 'AUTOCLAVE' }) {
   const [ops, setOps] = useState([])
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState('')
   const [opFinalizacao, setOpFinalizacao] = useState(null)
   const [resultado, setResultado] = useState(null)
+  const [opFinalizacaoEtapa, setOpFinalizacaoEtapa] = useState(null)
 
   async function carregar() {
     try {
       setCarregando(true)
       setErro('')
-      setOps(await listarOPLotesExecucao('CLASSIFICADORA'))
+      setOps(await listarOPLotesExecucao(processo))
     } catch (error) {
       setErro(error.message)
     } finally {
@@ -27,7 +30,7 @@ export default function ExecucaoLotesFabrica1() {
     }
   }
 
-  useEffect(() => { carregar() }, [])
+  useEffect(() => { carregar() }, [processo])
 
   async function iniciar(op) {
     try {
@@ -59,11 +62,25 @@ export default function ExecucaoLotesFabrica1() {
     }
   }
 
+  async function finalizarEtapa(operador) {
+    try {
+      setCarregando(true)
+      setErro('')
+      await finalizarEtapaOPLote(opFinalizacaoEtapa.id, operador)
+      setOpFinalizacaoEtapa(null)
+      await carregar()
+    } catch (error) {
+      setErro(error.message)
+    } finally {
+      setCarregando(false)
+    }
+  }
+
   return (
     <section className="execucao-lotes-f1">
       <div className="centro-execucao-header">
         <div>
-          <h3>Classificadora — OPs por lote</h3>
+          <h3>{processo} — OPs por lote</h3>
           <span>Execução conectada à fila e aos pacotes reservados pelo PCP.</span>
         </div>
         <button type="button" className="btn ghost" onClick={carregar} disabled={carregando}>
@@ -101,8 +118,12 @@ export default function ExecucaoLotesFabrica1() {
               </div>
               <div className="execucao-lote-actions">
                 {op.status === 'Em produção' ? (
-                  <button type="button" className="btn primary" onClick={() => setOpFinalizacao(op)}>
-                    <Tags size={17} /> Finalizar classificação
+                  <button
+                    type="button"
+                    className="btn primary"
+                    onClick={() => processo === 'CLASSIFICADORA' ? setOpFinalizacao(op) : setOpFinalizacaoEtapa(op)}
+                  >
+                    <Tags size={17} /> {processo === 'CLASSIFICADORA' ? 'Finalizar classificação' : 'Finalizar etapa'}
                   </button>
                 ) : (
                   <button type="button" className="btn primary" onClick={() => iniciar(op)}>
@@ -115,7 +136,7 @@ export default function ExecucaoLotesFabrica1() {
         })}
 
         {!carregando && !ops.length && (
-          <div className="empty-card">Nenhuma OP de lote disponível para a Classificadora.</div>
+          <div className="empty-card">Nenhuma OP de lote disponível para {processo}.</div>
         )}
       </div>
 
@@ -132,6 +153,14 @@ export default function ExecucaoLotesFabrica1() {
         saidas={resultado?.saidas || []}
         opLote={resultado?.opLote}
         onFechar={() => setResultado(null)}
+      />
+
+      <ModalFinalizacaoEtapaLote
+        aberto={Boolean(opFinalizacaoEtapa)}
+        opLote={opFinalizacaoEtapa}
+        carregando={carregando}
+        onCancelar={() => setOpFinalizacaoEtapa(null)}
+        onConfirmar={finalizarEtapa}
       />
     </section>
   )
