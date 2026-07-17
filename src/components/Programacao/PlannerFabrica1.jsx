@@ -3,7 +3,7 @@ import LinhaOPLote from './LinhaOPLote.jsx'
 export default function PlannerFabrica1({
   opLotes, linhaArrastada, linhaSobre, setLinhaArrastada, 
   setLinhaSobre,reorganizarFilaOPLote,moverPrioridadeOPLote,
-  recursosSetor, alterarRecursoOPLote, alterarDataInicioOPLote
+  recursosSetor, alterarRecursoOPLote, alterarDataInicioOPLote, onEditarPlanejamento
 }) {
   return (
     <section className="table-card">
@@ -40,6 +40,7 @@ export default function PlannerFabrica1({
                 recursosSetor={recursosSetor}
                 alterarRecursoOPLote={alterarRecursoOPLote}
                 alterarDataInicioOPLote={alterarDataInicioOPLote}
+                onEditarPlanejamento={onEditarPlanejamento}
               />
             ))}
 
