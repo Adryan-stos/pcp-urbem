@@ -4880,3 +4880,202 @@ td {
     page-break-inside: avoid;
   }
 }
+
+/* =========================================================
+   EXECUÇÃO DE OPs DE LOTE E CLASSIFICAÇÃO
+   ========================================================= */
+
+.execucao-lotes-f1 {
+  display: grid;
+  gap: 20px;
+}
+
+.execucao-lotes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 18px;
+}
+
+.execucao-lote-card {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 10px 28px rgba(20, 85, 80, 0.07);
+}
+
+.execucao-lote-card > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.execucao-lote-card header span,
+.execucao-lote-resumo span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.execucao-lote-card h4 {
+  margin: 5px 0 0;
+  color: var(--urbem-green);
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+
+.execucao-lote-resumo {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.execucao-lote-resumo > div {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(220, 240, 245, 0.45);
+}
+
+.execucao-lote-pacotes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.execucao-lote-pacotes span {
+  padding: 6px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--urbem-green);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.execucao-lote-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.classificacao-modal {
+  width: min(1180px, calc(100vw - 36px));
+  max-height: calc(100vh - 36px);
+  overflow: auto;
+}
+
+.classificacao-operador {
+  display: grid;
+  gap: 7px;
+  margin: 18px 0;
+  color: var(--urbem-green);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.classificacao-pacotes {
+  display: grid;
+  gap: 16px;
+}
+
+.classificacao-pacote {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(220, 240, 245, 0.22);
+}
+
+.classificacao-pacote > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.classificacao-pacote > header > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.classificacao-pacote header span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.classificacao-saldo {
+  display: grid;
+  gap: 2px;
+  min-width: 130px;
+  padding: 8px 11px;
+  border-radius: 12px;
+  text-align: right;
+}
+
+.classificacao-saldo.ok {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.classificacao-saldo.pendente {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.classificacao-saida-grid,
+.classificacao-saida-legenda {
+  display: grid;
+  grid-template-columns: 1.3fr repeat(3, minmax(105px, 0.7fr)) minmax(105px, 0.7fr) 42px;
+  gap: 8px;
+}
+
+.classificacao-saida-legenda {
+  padding: 0 2px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.classificacao-saida-grid {
+  margin-top: 8px;
+}
+
+.classificacao-saida-grid input,
+.classificacao-saida-grid select {
+  min-width: 0;
+  padding: 10px;
+  border-radius: 11px;
+}
+
+.classificacao-pacote-actions {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.classificacao-pacote-actions label {
+  display: grid;
+  gap: 5px;
+  width: 130px;
+  color: var(--urbem-green);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+@media (max-width: 900px) {
+  .classificacao-saida-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .classificacao-saida-legenda {
+    display: none;
+  }
+
+  .classificacao-saida-grid .icon-button {
+    justify-self: end;
+  }
+}
