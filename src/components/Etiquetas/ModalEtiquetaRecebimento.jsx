@@ -104,7 +104,6 @@ export default function ModalEtiquetaRecebimento({ aberto, pacote, recebimento, 
                 {qrCode && <img src={qrCode} alt={`QR Code do pacote ${codigo}`} />}
                 <strong>{codigo}</strong>
                 <span>{pacote.buffer_atual || 'BUFFER AUTOCLAVE'}</span>
-                <span className="etiqueta-rastreabilidade-status">RASTREABILIDADE ATIVA</span>
               </div>
             </div>
 
