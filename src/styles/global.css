@@ -4906,6 +4906,29 @@ td {
   box-shadow: 0 10px 28px rgba(20, 85, 80, 0.07);
 }
 
+.execucao-lote-card.production { border-color: #1684c7; box-shadow: 0 10px 28px rgba(22, 132, 199, 0.16); }
+.execucao-lote-card.paused { border-color: #c58b12; box-shadow: 0 10px 28px rgba(197, 139, 18, 0.16); }
+.execucao-lote-card.late { border-color: #c83b3b; box-shadow: 0 10px 28px rgba(200, 59, 59, 0.17); }
+.execucao-lote-card.upcoming { border-color: #8b67c7; box-shadow: 0 10px 28px rgba(139, 103, 199, 0.16); }
+.execucao-lote-card.scheduled { border-color: #27a768; }
+
+.execucao-lote-status {
+  width: fit-content;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #eaf3f2;
+  color: var(--urbem-green);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.execucao-lote-status.production { background: #e5f3ff; color: #0867a8; }
+.execucao-lote-status.paused { background: #fff3d5; color: #895d00; }
+.execucao-lote-status.late { background: #ffe8e8; color: #a12424; }
+.execucao-lote-status.upcoming { background: #f0eaff; color: #624099; }
+.execucao-lote-status.scheduled { background: #e4f7ec; color: #17683e; }
+
 .execucao-lote-card > header {
   display: flex;
   align-items: flex-start;
