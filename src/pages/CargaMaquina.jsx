@@ -180,7 +180,7 @@ async function carregarDadosGantt() {
         .select(`
           *, op_lote_itens (
             quantidade_prevista, volume_previsto_m3,
-            pacotes_materia_prima (codigo_pacote, especie, classe)
+            pacotes_materia_prima (*)
           )
         `)
         .eq('ativo', true)
