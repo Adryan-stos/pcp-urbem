@@ -4405,6 +4405,16 @@ td {
   font-size: 10px;
 }
 
+.machine-date-editor {
+  display: grid;
+  gap: 6px;
+  min-width: 170px;
+}
+
+.machine-date-editor input {
+  width: 100%;
+}
+
 .machine-gantt-resource-group + .machine-gantt-resource-group {
   border-top: 1px solid var(--border);
 }
