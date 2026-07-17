@@ -200,6 +200,22 @@ async function carregarDadosGantt() {
   }
 }
 
+async function alterarInicioGantt(operacao, dataInicio) {
+  try {
+    setErro('')
+    const tabela = operacao.tipo === 'lote' ? 'op_lotes' : 'op_processos'
+    const { error } = await supabase
+      .from(tabela)
+      .update({ data_prevista_inicio: dataInicio || null })
+      .eq('id', operacao.registroId)
+
+    if (error) throw error
+    await carregarDadosGantt()
+  } catch (error) {
+    setErro(error.message)
+  }
+}
+
   useEffect(() => {
     carregarProcessos()
     carregarRecursosSetor()
@@ -598,7 +614,12 @@ async function carregarDadosGantt() {
             </div>
 
             {erro && <div className="alert">{erro}</div>}
-            <GanttCargaMaquina recursos={recursosGantt} processos={processosGantt} opLotes={lotesGantt} />
+            <GanttCargaMaquina
+              recursos={recursosGantt}
+              processos={processosGantt}
+              opLotes={lotesGantt}
+              onAlterarInicio={alterarInicioGantt}
+            />
           </div>
         )
       }
