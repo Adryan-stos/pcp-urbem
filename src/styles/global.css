@@ -4758,7 +4758,14 @@ td {
 }
 
 .etiqueta-secundaria .etiqueta-campo strong {
-  font-size: 9.5pt;
+  overflow-wrap: anywhere;
+  font-size: 9pt;
+  line-height: 1.05;
+}
+
+.etiqueta-secundaria .etiqueta-campo {
+  min-height: 18mm;
+  padding: 2.5mm 3mm;
 }
 
 .etiqueta-qr {
@@ -4787,14 +4794,6 @@ td {
 .etiqueta-print-area footer {
   font-size: 6.5pt;
   font-weight: 700;
-}
-
-.etiqueta-rastreabilidade-status {
-  margin-top: 2mm;
-  padding: 1.5mm 2mm;
-  border: 1px solid #111;
-  font-size: 6pt !important;
-  letter-spacing: 0.04em;
 }
 
 .etiqueta-print-area footer {
