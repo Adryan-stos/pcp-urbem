@@ -1,4 +1,5 @@
 import { ArrowUp, ArrowDown } from 'lucide-react'
+import { obterSituacaoOperacao } from '../../utils/situacaoOperacao.js'
 
 const statusPCP = [
   'Aguardando programação',
@@ -23,12 +24,14 @@ export default function LinhaProcesso({
   alterarStatusPCP,
   moverPrioridade,
   recursosSetor,
-  alterarRecursoProcesso
+  alterarRecursoProcesso,
+  onEditarPlanejamento
 }) {
   const op = processo.ordens_producao
   const item = op?.itens_projeto
   const projeto = item?.projetos
   const carregamento = item?.carregamentos_projeto
+  const situacao = obterSituacaoOperacao(processo)
 
   return (
     <tr
@@ -77,15 +80,15 @@ export default function LinhaProcesso({
       </td>
 
       <td>
-        <input
-          type="datetime-local"
-          value={
-            processo.data_prevista_inicio
-              ? processo.data_prevista_inicio.slice(0, 16)
-              : ''
-          }
-          onChange={(e) => alterarDataInicio(processo.id, e.target.value)}
-        />
+        <div className="machine-date-editor">
+          <button type="button" className="machine-planning-date-button" onClick={() => onEditarPlanejamento({
+            tipo: 'processo', registroId: processo.id,
+            titulo: op?.numero_op || 'OP sem número',
+            inicio: processo.data_prevista_inicio,
+            fim: processo.data_prevista_fim
+          })}>{processo.data_prevista_inicio ? new Date(processo.data_prevista_inicio).toLocaleString('pt-BR') : 'Definir datas'}</button>
+          <span className={`machine-gantt-status ${situacao.classe}`}>{situacao.rotulo}</span>
+        </div>
       </td>
 
       <td>

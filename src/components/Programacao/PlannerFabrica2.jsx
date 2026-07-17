@@ -17,7 +17,8 @@ export default function PlannerFabrica2({
   alterarStatusPCP,
   moverPrioridade,
   recursosSetor,
-  alterarRecursoProcesso
+  alterarRecursoProcesso,
+  onEditarPlanejamento
 }) {
   return (
     <section className="table-card">
@@ -81,6 +82,7 @@ export default function PlannerFabrica2({
                   moverPrioridade={moverPrioridade}
                   recursosSetor={recursosSetor}
                   alterarRecursoProcesso={alterarRecursoProcesso}
+                  onEditarPlanejamento={onEditarPlanejamento}
                 />
               )
             })}
@@ -107,6 +109,7 @@ export default function PlannerFabrica2({
                 moverPrioridade={moverPrioridade}
                 recursosSetor={recursosSetor}
                 alterarRecursoProcesso={alterarRecursoProcesso}
+                onEditarPlanejamento={onEditarPlanejamento}
               />
             ))}
 

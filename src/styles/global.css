@@ -4055,6 +4055,122 @@ td {
 /* ==================================================
    GANTT DE CARGA MÁQUINA
 ================================================== */
+.machine-view-tabs {
+  display: flex;
+  width: fit-content;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.machine-view-tabs button {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  padding: 9px 15px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.machine-view-tabs button.active {
+  background: var(--urbem-green);
+  color: #fff;
+}
+
+.machine-gantt-page-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 18px;
+  align-items: start;
+}
+
+.machine-gantt-main {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.machine-gantt-summary {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(130px, 1fr));
+  gap: 10px;
+}
+
+.machine-gantt-summary div {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.machine-gantt-summary span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.machine-gantt-summary strong {
+  color: var(--urbem-green);
+  font-size: 19px;
+}
+
+.machine-gantt-summary .danger {
+  border-color: #e7a4a4;
+  background: #fff4f4;
+}
+
+.machine-gantt-summary .danger strong {
+  color: #a12424;
+}
+
+.machine-gantt-filters {
+  position: sticky;
+  top: 18px;
+  display: grid;
+  gap: 13px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: #fff;
+}
+
+.machine-gantt-filter-title {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  color: var(--urbem-green);
+}
+
+.machine-gantt-filter-title div,
+.machine-gantt-filters label {
+  display: grid;
+  gap: 5px;
+}
+
+.machine-gantt-filter-title span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.machine-gantt-filters label {
+  color: var(--urbem-green);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.machine-gantt-filters input,
+.machine-gantt-filters select {
+  width: 100%;
+}
+
 .machine-gantt-card {
   display: grid;
   gap: 16px;
@@ -4139,9 +4255,22 @@ td {
   font-weight: 900;
 }
 
+.machine-gantt-days span small {
+  display: block;
+  font-size: 7px;
+  text-transform: uppercase;
+}
+
 .machine-gantt-days span.weekend,
 .machine-gantt-track > span.weekend {
   background: #f2f0e5;
+}
+
+.machine-gantt-days span.today,
+.machine-gantt-track > span.today {
+  background: #ddf4ef;
+  box-shadow: inset 2px 0 0 #27a17f, inset -2px 0 0 #27a17f;
+  color: var(--urbem-green);
 }
 
 .machine-gantt-row {
@@ -4152,9 +4281,19 @@ td {
 }
 
 .machine-gantt-resource {
-  display: grid;
+  display: flex;
+  gap: 7px;
   align-content: center;
-  gap: 4px;
+  align-items: center;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.machine-gantt-resource span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
 }
 
 .machine-gantt-resource strong {
@@ -4203,6 +4342,208 @@ td {
   white-space: nowrap;
 }
 
+.machine-gantt-bar.production {
+  background: #0879c9;
+}
+
+.machine-gantt-bar.paused {
+  background: #c58b12;
+}
+
+.machine-gantt-bar.completed {
+  background: #248b57;
+}
+
+.machine-gantt-bar.late {
+  background: #b52d2d;
+}
+
+.machine-gantt-status {
+  width: fit-content;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #eaf3f2;
+  color: var(--urbem-green);
+  font-size: 9px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.machine-gantt-status.production {
+  background: #e5f3ff;
+  color: #0867a8;
+}
+
+.machine-gantt-status.paused {
+  background: #fff3d5;
+  color: #895d00;
+}
+
+.machine-gantt-status.completed {
+  background: #e4f7ec;
+  color: #17683e;
+}
+
+.machine-gantt-status.late {
+  background: #ffe8e8;
+  color: #a12424;
+}
+
+.machine-gantt-start-edit {
+  display: grid;
+  gap: 3px;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.machine-gantt-start-edit input {
+  width: 100%;
+  padding: 6px 7px;
+  font-size: 10px;
+}
+
+.machine-date-editor {
+  display: grid;
+  gap: 6px;
+  min-width: 170px;
+}
+
+.machine-date-editor input {
+  width: 100%;
+}
+
+.machine-planning-date-button {
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--urbem-green);
+  font-size: 10px;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+}
+
+.machine-planning-date-button:hover {
+  border-color: var(--urbem-green);
+  background: #f1f8f7;
+}
+
+.planning-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(5, 36, 34, .52);
+}
+
+.planning-modal {
+  display: grid;
+  gap: 18px;
+  width: min(540px, 100%);
+  padding: 22px;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .25);
+}
+
+.planning-modal-header,
+.planning-modal-header > div,
+.planning-modal-actions {
+  display: flex;
+  align-items: center;
+}
+
+.planning-modal-header {
+  justify-content: space-between;
+}
+
+.planning-modal-header > div {
+  gap: 10px;
+  color: var(--urbem-green);
+}
+
+.planning-modal-header span,
+.planning-modal-operation {
+  display: grid;
+  gap: 3px;
+}
+
+.planning-modal-header small,
+.planning-modal-operation span,
+.planning-modal-operation small {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.planning-modal-header button {
+  display: grid;
+  place-items: center;
+  padding: 7px;
+  border: 0;
+  border-radius: 9px;
+  background: #eef6f5;
+  color: var(--urbem-green);
+  cursor: pointer;
+}
+
+.planning-modal-operation {
+  padding: 13px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #f7fbfa;
+  color: var(--urbem-green);
+}
+
+.planning-modal-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.planning-modal-fields label {
+  display: grid;
+  gap: 6px;
+  color: var(--urbem-green);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.planning-modal-actions {
+  justify-content: flex-end;
+  gap: 9px;
+}
+
+@media (max-width: 560px) {
+  .planning-modal-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+.machine-gantt-resource-group + .machine-gantt-resource-group {
+  border-top: 1px solid var(--border);
+}
+
+.machine-gantt-resource-group > .machine-gantt-row {
+  border-top: 0;
+}
+
+.machine-gantt-detail-row {
+  min-height: 78px;
+  border-top: 1px dashed #c7dcda;
+  background: #fbfdfd;
+}
+
+.machine-gantt-detail-row .machine-gantt-resource {
+  padding-left: 34px;
+}
+
 .machine-gantt-empty {
   padding: 28px;
   color: var(--muted);
@@ -4213,6 +4554,30 @@ td {
   .machine-gantt-header {
     align-items: stretch;
     flex-direction: column;
+  }
+}
+
+@media (max-width: 1180px) {
+  .machine-gantt-page-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .machine-gantt-filters {
+    position: static;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-row: 1;
+  }
+
+  .machine-gantt-filter-title,
+  .machine-gantt-filters .btn {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .machine-gantt-summary,
+  .machine-gantt-filters {
+    grid-template-columns: 1fr 1fr;
   }
 }
 

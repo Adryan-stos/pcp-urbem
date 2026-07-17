@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { RefreshCw } from 'lucide-react'
+import { CalendarRange, ListOrdered, RefreshCw } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import {
   criarOPLote,
@@ -10,6 +10,7 @@ import ModalOPLote from '../components/Programacao/ModalOPLote.jsx'
 import PlannerFabrica1 from '../components/Programacao/PlannerFabrica1.jsx'
 import PlannerFabrica2 from '../components/Programacao/PlannerFabrica2.jsx'
 import GanttCargaMaquina from '../components/Programacao/GanttCargaMaquina.jsx'
+import ModalPlanejamentoOperacao from '../components/Programacao/ModalPlanejamentoOperacao.jsx'
 
 const setoresFabrica1 = [
   { id: 'AUTOCLAVE', label: 'Autoclave', fabrica: 1, tipoOP: 'lote' },
@@ -50,6 +51,11 @@ export default function CargaMaquina() {
   const [opLotes, setOpLotes] = useState([])
   const [modalOPLoteAberto, setModalOPLoteAberto] = useState(false)
   const [salvandoOPLote, setSalvandoOPLote] = useState(false)
+  const [visao, setVisao] = useState('fila')
+  const [recursosGantt, setRecursosGantt] = useState([])
+  const [processosGantt, setProcessosGantt] = useState([])
+  const [lotesGantt, setLotesGantt] = useState([])
+  const [operacaoPlanejamento, setOperacaoPlanejamento] = useState(null)
 
   const setoresDaFabrica = fabricaAtual === 1 ? setoresFabrica1 : setoresFabrica2
 
@@ -144,10 +150,81 @@ async function carregarRecursosSetor() {
   }
 }
 
+async function carregarDadosGantt() {
+  try {
+    setCarregando(true)
+    setErro('')
+
+    const [recursosResultado, processosResultado, lotesResultado] = await Promise.all([
+      supabase
+        .from('recursos_produtivos')
+        .select(`
+          *, capacidades_recursos (*), calendarios_recursos (*), bloqueios_recursos (*)
+        `)
+        .eq('ativo', true)
+        .order('fabrica')
+        .order('processo')
+        .order('nome'),
+      supabase
+        .from('op_processos')
+        .select(`
+          *, ordens_producao (
+            id, numero_op, status, volume_m3,
+            itens_projeto (
+              codigo_interno_item, tipo_material,
+              projetos (codigo_interno, nome_projeto, cliente)
+            )
+          )
+        `)
+        .eq('ativo', true),
+      supabase
+        .from('op_lotes')
+        .select(`
+          *, op_lote_itens (
+            quantidade_prevista, volume_previsto_m3,
+            pacotes_materia_prima (*)
+          )
+        `)
+        .eq('ativo', true)
+    ])
+
+    if (recursosResultado.error) throw recursosResultado.error
+    if (processosResultado.error) throw processosResultado.error
+    if (lotesResultado.error) throw lotesResultado.error
+
+    setRecursosGantt(recursosResultado.data || [])
+    setProcessosGantt(processosResultado.data || [])
+    setLotesGantt(lotesResultado.data || [])
+  } catch (error) {
+    setErro(error.message)
+  } finally {
+    setCarregando(false)
+  }
+}
+
+async function aplicarPlanejamento(operacao) {
+  const { error } = await supabase.rpc('atualizar_planejamento_e_reordenar', {
+    p_tipo: operacao.tipo,
+    p_id: operacao.registroId,
+    p_inicio: operacao.inicio,
+    p_fim: operacao.fim
+  })
+
+  if (error) throw error
+
+  setOperacaoPlanejamento(null)
+  if (visao === 'gantt') await carregarDadosGantt()
+  else await carregarProcessos()
+}
+
   useEffect(() => {
     carregarProcessos()
     carregarRecursosSetor()
 }, [setorAtual, fabricaAtual])
+
+  useEffect(() => {
+    if (visao === 'gantt') carregarDadosGantt()
+  }, [visao])
 
   const processosDoSetor = processos
     .filter((processo) => processo.processo === setorAtual || processo.recurso === setorAtual )
@@ -253,6 +330,20 @@ async function carregarRecursosSetor() {
     const { error } = await supabase
       .from('op_lotes')
       .update({ recurso_id: recursoId || null })
+      .eq('id', opLoteId)
+
+    if (error) {
+      setErro(error.message)
+      return
+    }
+
+    carregarProcessos()
+  }
+
+  async function alterarDataInicioOPLote(opLoteId, dataInicio) {
+    const { error } = await supabase
+      .from('op_lotes')
+      .update({ data_prevista_inicio: dataInicio || null })
       .eq('id', opLoteId)
 
     if (error) {
@@ -513,6 +604,45 @@ async function carregarRecursosSetor() {
 
     await reorganizarFilaOPLote(opLote, destino)
   }
+
+      if (visao === 'gantt') {
+        return (
+          <div className="page">
+            <header className="page-header">
+              <div>
+                <p className="eyebrow">Programação · Carga Máquina</p>
+                <h2>Gantt de Carga</h2>
+                <span>Capacidade, ocupação e programação por recurso produtivo.</span>
+              </div>
+              <button className="btn ghost" onClick={carregarDadosGantt} disabled={carregando}>
+                <RefreshCw size={16} /> Atualizar
+              </button>
+            </header>
+
+            <div className="machine-view-tabs">
+              <button type="button" onClick={() => setVisao('fila')}>
+                <ListOrdered size={16} /> Fila de programação
+              </button>
+              <button type="button" className="active">
+                <CalendarRange size={16} /> Gantt de carga
+              </button>
+            </div>
+
+            {erro && <div className="alert">{erro}</div>}
+            <GanttCargaMaquina
+              recursos={recursosGantt}
+              processos={processosGantt}
+              opLotes={lotesGantt}
+              onEditarPlanejamento={setOperacaoPlanejamento}
+            />
+            <ModalPlanejamentoOperacao
+              operacao={operacaoPlanejamento}
+              onCancelar={() => setOperacaoPlanejamento(null)}
+              onAplicar={aplicarPlanejamento}
+            />
+          </div>
+        )
+      }
       
       return (
         <div className="page">
@@ -530,6 +660,15 @@ async function carregarRecursosSetor() {
       </header>
 
       {erro && <div className="alert">{erro}</div>}
+
+      <div className="machine-view-tabs">
+        <button type="button" className="active">
+          <ListOrdered size={16} /> Fila de programação
+        </button>
+        <button type="button" onClick={() => setVisao('gantt')}>
+          <CalendarRange size={16} /> Gantt de carga
+        </button>
+      </div>
 
       <section className="machine-overview-panel">
         <div className="machine-overview-header">
@@ -616,11 +755,6 @@ async function carregarRecursosSetor() {
           <small>com itens no setor</small>
         </div>
       </section>
-      <GanttCargaMaquina
-        recursos={recursosSetor}
-        processos={processosDoSetor}
-        opLotes={opLotes}
-      />
       {ehFabrica1 ? (
         <PlannerFabrica1
           opLotes={opLotes}
@@ -632,6 +766,8 @@ async function carregarRecursosSetor() {
           moverPrioridadeOPLote={moverPrioridadeOPLote}
           recursosSetor={recursosSetor}
           alterarRecursoOPLote={alterarRecursoOPLote}
+          alterarDataInicioOPLote={alterarDataInicioOPLote}
+          onEditarPlanejamento={setOperacaoPlanejamento}
         />
       ) : (
         <PlannerFabrica2
@@ -648,6 +784,7 @@ async function carregarRecursosSetor() {
           soltarNaPosicao={soltarNaPosicao}
           finalizarArraste={finalizarArraste}
           alterarDataInicio={alterarDataInicio}
+          onEditarPlanejamento={setOperacaoPlanejamento}
           alterarStatusPCP={alterarStatusPCP}
           moverPrioridade={moverPrioridade}
           recursosSetor={recursosSetor}
@@ -661,6 +798,12 @@ async function carregarRecursosSetor() {
             onCancelar={() => setModalOPLoteAberto(false)}
             onSalvar={salvarOPLote}
             carregando={salvandoOPLote}
+          />
+
+          <ModalPlanejamentoOperacao
+            operacao={operacaoPlanejamento}
+            onCancelar={() => setOperacaoPlanejamento(null)}
+            onAplicar={aplicarPlanejamento}
           />
 
         </div>
