@@ -3,7 +3,8 @@ import LinhaOPLote from './LinhaOPLote.jsx'
 export default function PlannerFabrica1({
   opLotes, linhaArrastada, linhaSobre, setLinhaArrastada, 
   setLinhaSobre,reorganizarFilaOPLote,moverPrioridadeOPLote,
-  recursosSetor, alterarRecursoOPLote, alterarDataInicioOPLote, onEditarPlanejamento
+  recursosSetor, alterarRecursoOPLote, alterarDataInicioOPLote, onEditarPlanejamento,
+  onEditarOPLote, onCancelarOPLote
 }) {
   return (
     <section className="table-card">
@@ -21,6 +22,7 @@ export default function PlannerFabrica1({
               <th>Buffer Saída</th>
               <th>Máquina</th>
               <th>Início previsto</th>
+              <th>Término previsto</th>
               <th>Status</th>
               <th>Ordem</th>
             </tr>
@@ -41,12 +43,14 @@ export default function PlannerFabrica1({
                 alterarRecursoOPLote={alterarRecursoOPLote}
                 alterarDataInicioOPLote={alterarDataInicioOPLote}
                 onEditarPlanejamento={onEditarPlanejamento}
+                onEditarOPLote={onEditarOPLote}
+                onCancelarOPLote={onCancelarOPLote}
               />
             ))}
 
             {!opLotes.length && (
               <tr>
-                <td colSpan="12" className="empty">
+                <td colSpan="13" className="empty">
                   Nenhuma OP de lote criada para este setor.
                 </td>
               </tr>
