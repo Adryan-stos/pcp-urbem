@@ -10,6 +10,8 @@ function normalizarOperacoes(processos, opLotes) {
     const projeto = item?.projetos
     return {
       id: `processo-${processo.id}`,
+      tipo: 'processo',
+      registroId: processo.id,
       fabrica: 2,
       processo: processo.processo,
       recursoId: processo.recurso_id,
@@ -20,7 +22,9 @@ function normalizarOperacoes(processos, opLotes) {
       item: item?.codigo_interno_item || item?.tipo_material || '-',
       quantidade: Number(processo.quantidade_entrada_prevista || processo.quantidade_saida_prevista || 0),
       volume: Number(processo.ordens_producao?.volume_m3 || 0),
-      status: processo.status_pcp || processo.status || '-'
+      status: processo.status_pcp || processo.status || '-',
+      inicioReal: processo.inicio_producao,
+      fimReal: processo.fim_producao
     }
   })
 
@@ -29,6 +33,8 @@ function normalizarOperacoes(processos, opLotes) {
     const pacote = itens[0]?.pacotes_materia_prima
     return {
       id: `lote-${op.id}`,
+      tipo: 'lote',
+      registroId: op.id,
       fabrica: 1,
       processo: op.processo,
       recursoId: op.recurso_id,
@@ -40,14 +46,34 @@ function normalizarOperacoes(processos, opLotes) {
         [pacote?.especie, pacote?.classe].filter(Boolean).join(' ') || '-',
       quantidade: itens.reduce((total, item) => total + Number(item.quantidade_prevista || 0), 0),
       volume: itens.reduce((total, item) => total + Number(item.volume_previsto_m3 || 0), 0),
-      status: op.status || '-'
+      status: op.status || '-',
+      inicioReal: op.inicio_producao,
+      fimReal: op.fim_producao
     }
   })
 
   return [...projetos, ...lotes]
 }
 
-export default function GanttCargaMaquina({ recursos, processos, opLotes }) {
+function situacaoOperacao(op) {
+  const texto = String(op.status || '').toLowerCase()
+  const concluida = texto.includes('conclu') || texto.includes('finaliz')
+  const emProducao = texto.includes('produção') || texto.includes('producao')
+  const emPausa = texto.includes('pausa')
+  const agora = Date.now()
+  const fimPrevistoVencido = op.fim && new Date(op.fim).getTime() < agora
+  const inicioPrevistoVencidoSemExecucao = !op.fim && op.inicio && new Date(op.inicio).getTime() < agora && !op.inicioReal
+  const iniciouSemEncerrarAposPrazo = Boolean(op.inicioReal && !op.fimReal && fimPrevistoVencido)
+  const atrasada = !concluida && (fimPrevistoVencido || inicioPrevistoVencidoSemExecucao || iniciouSemEncerrarAposPrazo)
+
+  if (concluida) return { classe: 'completed', rotulo: 'Concluída', atrasada: false }
+  if (emPausa) return { classe: atrasada ? 'late paused' : 'paused', rotulo: atrasada ? 'Em pausa · atrasada' : 'Em pausa', atrasada }
+  if (emProducao) return { classe: atrasada ? 'late production' : 'production', rotulo: atrasada ? 'Em produção · atrasada' : 'Em produção', atrasada }
+  if (atrasada) return { classe: 'late', rotulo: 'Atrasada', atrasada: true }
+  return { classe: 'scheduled', rotulo: op.status || 'Programada', atrasada: false }
+}
+
+export default function GanttCargaMaquina({ recursos, processos, opLotes, onAlterarInicio }) {
   const hoje = formatarDataLocal(new Date())
   const [inicio, setInicio] = useState(hoje)
   const [fabrica, setFabrica] = useState('1')
@@ -68,7 +94,12 @@ export default function GanttCargaMaquina({ recursos, processos, opLotes }) {
   const dias = Array.from({ length: HORIZONTE_DIAS }, (_, indice) => {
     const data = somarDias(inicio, indice)
     const objeto = new Date(`${data}T00:00:00`)
-    return { data, rotulo: String(objeto.getDate()).padStart(2, '0'), fimSemana: objeto.getDay() === 0 || objeto.getDay() === 6 }
+    return {
+      data,
+      rotulo: String(objeto.getDate()).padStart(2, '0'),
+      fimSemana: objeto.getDay() === 0 || objeto.getDay() === 6,
+      hoje: data === hoje
+    }
   })
   const inicioMs = new Date(`${inicio}T00:00:00`).getTime()
   const fimMs = new Date(`${somarDias(fim, 1)}T00:00:00`).getTime()
@@ -89,6 +120,9 @@ export default function GanttCargaMaquina({ recursos, processos, opLotes }) {
   const saldo = capacidadeM3 - volumeProgramado
   const ocupacao = capacidadeM3 > 0 ? (volumeProgramado / capacidadeM3) * 100 : 0
   const statusDisponiveis = [...new Set(operacoes.filter((op) => op.status).map((op) => op.status))].sort()
+  const totalAtrasadas = operacoesFiltradas.filter((op) => situacaoOperacao(op).atrasada).length
+  const totalEmProducao = operacoesFiltradas.filter((op) => situacaoOperacao(op).classe.includes('production')).length
+  const totalEmPausa = operacoesFiltradas.filter((op) => situacaoOperacao(op).classe.includes('paused')).length
 
   function alternarRecurso(id) {
     setExpandidos((atual) => {
@@ -101,8 +135,9 @@ export default function GanttCargaMaquina({ recursos, processos, opLotes }) {
   function renderTrilha(operacoesLinha, vazia = 'Sem OP programada neste horizonte') {
     return (
       <div className="machine-gantt-track">
-        {dias.map((dia) => <span key={dia.data} className={dia.fimSemana ? 'weekend' : ''} />)}
+        {dias.map((dia) => <span key={dia.data} className={`${dia.fimSemana ? 'weekend' : ''} ${dia.hoje ? 'today' : ''}`} />)}
         {operacoesLinha.filter((op) => op.inicio).map((op) => {
+          const situacao = situacaoOperacao(op)
           const originalInicio = new Date(op.inicio).getTime()
           const originalFim = op.fim ? new Date(op.fim).getTime() : originalInicio + 86400000
           if (originalFim <= inicioMs || originalInicio >= fimMs) return null
@@ -110,7 +145,7 @@ export default function GanttCargaMaquina({ recursos, processos, opLotes }) {
           const barraFim = Math.min(fimMs, Math.max(barraInicio + 3600000, originalFim))
           const esquerda = ((barraInicio - inicioMs) / duracao) * 100
           const largura = ((barraFim - barraInicio) / duracao) * 100
-          return <div key={op.id} className="machine-gantt-bar" style={{ left: `${esquerda}%`, width: `${Math.max(largura, 1.2)}%` }} title={`${op.titulo} · ${op.volume.toFixed(2)} m³ · ${op.status}`}>{op.titulo}</div>
+          return <div key={op.id} className={`machine-gantt-bar ${situacao.classe}`} style={{ left: `${esquerda}%`, width: `${Math.max(largura, 1.2)}%` }} title={`${op.titulo} · ${op.volume.toFixed(2)} m³ · ${situacao.rotulo}`}>{op.titulo}</div>
         })}
         {!operacoesLinha.some((op) => op.inicio) && <em>{vazia}</em>}
       </div>
@@ -126,6 +161,9 @@ export default function GanttCargaMaquina({ recursos, processos, opLotes }) {
           <div className={saldo < 0 ? 'danger' : ''}><span>Disponível</span><strong>{saldo.toFixed(2)} m³</strong></div>
           <div className={ocupacao > 100 ? 'danger' : ''}><span>Ocupação</span><strong>{ocupacao.toFixed(1)}%</strong></div>
           <div><span>OPs filtradas</span><strong>{operacoesFiltradas.length}</strong></div>
+          <div className={totalAtrasadas ? 'danger' : ''}><span>Atrasadas</span><strong>{totalAtrasadas}</strong></div>
+          <div><span>Em produção</span><strong>{totalEmProducao}</strong></div>
+          <div><span>Em pausa</span><strong>{totalEmPausa}</strong></div>
         </section>
 
         <section className="machine-gantt-card">
@@ -135,7 +173,7 @@ export default function GanttCargaMaquina({ recursos, processos, opLotes }) {
           <div className="machine-gantt-scroll">
             <div className="machine-gantt-grid">
               <div className="machine-gantt-corner">Máquina / OP / item</div>
-              <div className="machine-gantt-days">{dias.map((dia) => <span key={dia.data} className={dia.fimSemana ? 'weekend' : ''}>{dia.rotulo}</span>)}</div>
+              <div className="machine-gantt-days">{dias.map((dia) => <span key={dia.data} className={`${dia.fimSemana ? 'weekend' : ''} ${dia.hoje ? 'today' : ''}`}>{dia.rotulo}{dia.hoje && <small>Hoje</small>}</span>)}</div>
               {recursosFiltrados.map((recurso) => {
                 const capacidade = calcularCapacidadePeriodo(recurso, inicio, fim)
                 const ops = operacoesFiltradas.filter((op) => op.recursoId === recurso.id)
@@ -149,7 +187,7 @@ export default function GanttCargaMaquina({ recursos, processos, opLotes }) {
                     </div>
                     {aberto && ops.map((op) => (
                       <div className="machine-gantt-row machine-gantt-detail-row" key={op.id}>
-                        <div className="machine-gantt-resource"><span><strong>{op.titulo}</strong><small>{op.projeto} · {op.item}</small><small>{op.quantidade.toFixed(0)} un. · {op.volume.toFixed(2)} m³ · {op.inicio ? new Date(op.inicio).toLocaleString('pt-BR') : 'sem início'} → {op.fim ? new Date(op.fim).toLocaleString('pt-BR') : 'sem término'}</small></span></div>
+                        <div className="machine-gantt-resource"><span><strong>{op.titulo}</strong><small>{op.projeto} · {op.item}</small><small>{op.quantidade.toFixed(0)} un. · {op.volume.toFixed(2)} m³ · {op.inicio ? new Date(op.inicio).toLocaleString('pt-BR') : 'sem início'} → {op.fim ? new Date(op.fim).toLocaleString('pt-BR') : 'sem término'}</small><span className={`machine-gantt-status ${situacaoOperacao(op).classe}`}>{situacaoOperacao(op).rotulo}</span><label className="machine-gantt-start-edit">Início previsto<input type="datetime-local" value={op.inicio ? String(op.inicio).slice(0, 16) : ''} onChange={(e) => onAlterarInicio?.(op, e.target.value)} /></label></span></div>
                         {renderTrilha([op], 'Sem data prevista')}
                       </div>
                     ))}
