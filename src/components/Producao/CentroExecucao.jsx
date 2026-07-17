@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import CardExecucao from './CardExecucao.jsx'
 import { useCentroExecucao } from '../../hooks/useCentroExecucao.js'
+import ExecucaoLotesFabrica1 from './ExecucaoLotesFabrica1.jsx'
 
 const setores = [
   'AUTOCLAVE',
@@ -15,9 +16,12 @@ const setores = [
   'ACABAMENTO'
 ]
 
+const processosFabrica1 = ['AUTOCLAVE', 'GRADEADOR', 'ESTUFA', 'CLASSIFICADORA']
+
 export default function CentroExecucao({ onExecutar }) {
   const [setorSelecionado, setSetorSelecionado] = useState('AUTOCLAVE')
   const { taloes, carregando, erro, carregarTaloes } = useCentroExecucao()
+  const fabrica1Selecionada = processosFabrica1.includes(setorSelecionado)
 
   const cardsFiltrados = taloes
     .filter((talao) =>
@@ -40,12 +44,14 @@ export default function CentroExecucao({ onExecutar }) {
           </span>
         </div>
 
-        <button type="button" className="btn ghost" onClick={carregarTaloes}>
-          Atualizar
-        </button>
+        {!fabrica1Selecionada && (
+          <button type="button" className="btn ghost" onClick={carregarTaloes}>
+            Atualizar
+          </button>
+        )}
       </div>
 
-      {erro && <div className="alert">{erro}</div>}
+      {!fabrica1Selecionada && erro && <div className="alert">{erro}</div>}
 
       <div className="machine-sector-tabs">
         {setores.map((setor) => (
@@ -62,13 +68,13 @@ export default function CentroExecucao({ onExecutar }) {
         ))}
       </div>
 
-      {carregando && (
+      {fabrica1Selecionada ? (
+        <ExecucaoLotesFabrica1 processo={setorSelecionado} />
+      ) : carregando ? (
         <div className="empty-card">
           Carregando talões...
         </div>
-      )}
-
-      {!carregando && (
+      ) : (
         <div className="centro-execucao-grid">
           {cardsFiltrados.map((talao, index) => (
             <CardExecucao
