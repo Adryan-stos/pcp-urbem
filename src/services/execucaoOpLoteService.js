@@ -41,3 +41,13 @@ export async function finalizarClassificacaoOPLote({ opLoteId, saidas, perdas, o
   if (error) throw error
   return data
 }
+
+export async function finalizarEtapaOPLote(opLoteId, operador = '') {
+  const { data, error } = await supabase.rpc('finalizar_etapa_op_lote', {
+    p_op_lote_id: opLoteId,
+    p_operador: operador || null
+  })
+
+  if (error) throw error
+  return data
+}
