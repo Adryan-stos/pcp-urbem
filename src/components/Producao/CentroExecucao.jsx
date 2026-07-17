@@ -69,7 +69,7 @@ export default function CentroExecucao({ onExecutar }) {
       </div>
 
       {fabrica1Selecionada ? (
-        <ExecucaoLotesFabrica1 processo={setorSelecionado} />
+        <ExecucaoLotesFabrica1 processo={setorSelecionado} onExecutar={onExecutar} />
       ) : carregando ? (
         <div className="empty-card">
           Carregando talões...
