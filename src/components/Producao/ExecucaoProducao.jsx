@@ -87,11 +87,11 @@ async function buscarTalao() {
     try {
       if (!talao?.id) return
 
-      if (
+      if (talao._tipo_operacao !== 'lote' && (
         !dadosInicio.espessuraInicio ||
         !dadosInicio.larguraInicio ||
         !dadosInicio.comprimentoInicio
-      ) {
+      )) {
         setErro('Informe espessura, largura e comprimento antes de iniciar.')
         return
       }
@@ -100,8 +100,9 @@ async function buscarTalao() {
         espessuraInicio: Number(dadosInicio.espessuraInicio),
         larguraInicio: Number(dadosInicio.larguraInicio),
         comprimentoInicio: Number(dadosInicio.comprimentoInicio),
-        observacao: dadosInicio.observacao
-      })
+        observacao: dadosInicio.observacao,
+        operador: dadosInicio.operador
+      }, talao._tipo_operacao)
 
       setTalao((atual) => ({
         ...atual,
