@@ -1,4 +1,4 @@
-import { ArrowUp, ArrowDown, GripVertical } from 'lucide-react'
+import { ArrowUp, ArrowDown, GripVertical, Pencil, Ban } from 'lucide-react'
 import { obterSituacaoOperacao } from '../../utils/situacaoOperacao.js'
 
 export default function LinhaOPLote({
@@ -12,7 +12,9 @@ export default function LinhaOPLote({
   recursosSetor,
   alterarRecursoOPLote,
   alterarDataInicioOPLote,
-  onEditarPlanejamento
+  onEditarPlanejamento,
+  onEditarOPLote,
+  onCancelarOPLote
 }) {
   const itens = opLote.op_lote_itens || []
 
@@ -28,6 +30,7 @@ export default function LinhaOPLote({
 
   const primeiroItem = itens[0]?.pacotes_materia_prima
   const situacao = obterSituacaoOperacao(opLote)
+  const permiteAlterar = ['Programado', 'Aguardando programação'].includes(opLote.status)
 
   return (
     <tr
@@ -144,6 +147,12 @@ export default function LinhaOPLote({
       </td>
 
       <td>
+        <strong>{opLote.data_prevista_fim ? new Date(opLote.data_prevista_fim).toLocaleString('pt-BR') : 'A calcular'}</strong>
+        <br />
+        <small>{opLote.data_prevista_fim ? 'conforme planejamento/capacidade' : 'capacidade ou calendário pendente'}</small>
+      </td>
+
+      <td>
         <span className="op-status liberado">
           {opLote.status || 'Programado'}
         </span>
@@ -159,6 +168,8 @@ export default function LinhaOPLote({
           >
             <ArrowUp size={15} />
           </button>
+          {permiteAlterar && <button type="button" className="table-icon-action" onClick={() => onEditarOPLote?.(opLote)} title="Editar matéria-prima"><Pencil size={15} /></button>}
+          {permiteAlterar && <button type="button" className="table-icon-action danger" onClick={() => onCancelarOPLote?.(opLote)} title="Cancelar OP"><Ban size={15} /></button>}
 
           <button
             type="button"
