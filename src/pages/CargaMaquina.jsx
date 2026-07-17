@@ -339,6 +339,20 @@ async function alterarInicioGantt(operacao, dataInicio) {
     carregarProcessos()
   }
 
+  async function alterarDataInicioOPLote(opLoteId, dataInicio) {
+    const { error } = await supabase
+      .from('op_lotes')
+      .update({ data_prevista_inicio: dataInicio || null })
+      .eq('id', opLoteId)
+
+    if (error) {
+      setErro(error.message)
+      return
+    }
+
+    carregarProcessos()
+  }
+
     async function reorganizarFila(processoMovido, prioridadeDestino) {
     const filaAtual = processosDoSetor
         .filter((p) => p.id !== processoMovido.id)
@@ -746,6 +760,7 @@ async function alterarInicioGantt(operacao, dataInicio) {
           moverPrioridadeOPLote={moverPrioridadeOPLote}
           recursosSetor={recursosSetor}
           alterarRecursoOPLote={alterarRecursoOPLote}
+          alterarDataInicioOPLote={alterarDataInicioOPLote}
         />
       ) : (
         <PlannerFabrica2
