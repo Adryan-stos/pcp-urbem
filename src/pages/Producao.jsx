@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react'
 import CentroExecucao from '../components/Producao/CentroExecucao.jsx'
 import ExecucaoProducao from '../components/Producao/ExecucaoProducao.jsx'
-import ExecucaoLotesFabrica1 from '../components/Producao/ExecucaoLotesFabrica1.jsx'
 
 
 export default function Producao() {
-  const [aba, setAba] = useState('lotes-f1')
+  const [aba, setAba] = useState('centro')
   const [talaoExecucaoInicial, setTalaoExecucaoInicial] = useState('')
 
   return (
@@ -21,13 +20,6 @@ export default function Producao() {
       <div className="tabs">
         <button
           type="button"
-          className={`tab ${aba === 'lotes-f1' ? 'active' : ''}`}
-          onClick={() => setAba('lotes-f1')}
-        >
-          Fábrica 1 — Lotes
-        </button>
-        <button
-          type="button"
           className={`tab ${aba === 'centro' ? 'active' : ''}`}
           onClick={() => setAba('centro')}
         >
@@ -39,11 +31,10 @@ export default function Producao() {
           className={`tab ${aba === 'execucao' ? 'active' : ''}`}
           onClick={() => setAba('execucao')}
         >
-          Execução
+          Execução por talão — Fábrica 2
         </button>
       </div>
 
-      {aba === 'lotes-f1' && <ExecucaoLotesFabrica1 />}
 
       {aba === 'centro' && (
         <CentroExecucao
