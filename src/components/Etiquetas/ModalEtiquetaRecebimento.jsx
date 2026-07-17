@@ -108,8 +108,7 @@ export default function ModalEtiquetaRecebimento({ aberto, pacote, recebimento, 
             </div>
 
             <footer>
-              <strong>RASTREABILIDADE</strong>
-              <span>RECEBIMENTO → CLASSIFICAÇÃO</span>
+              <span><strong>RASTREABILIDADE:</strong> RECEBIMENTO → CLASSIFICAÇÃO</span>
             </footer>
           </article>
         </div>
