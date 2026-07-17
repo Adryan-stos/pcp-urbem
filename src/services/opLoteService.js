@@ -3,6 +3,7 @@ import {
   obterBuffersEntrada,
   normalizarProcesso
 } from './processoEstoqueService.js'
+import { datetimeLocalParaIso } from '../utils/datasPlanejamento.js'
 
 export async function listarOPLotesPorProcesso(processo) {
   const processoNormalizado = normalizarProcesso(processo)
@@ -90,8 +91,8 @@ export async function criarOPLote({
     {
       p_processo: normalizarProcesso(processo),
       p_prioridade: prioridade,
-      p_data_prevista_inicio: dataPrevistaInicio,
-      p_data_prevista_fim: dataPrevistaFim,
+      p_data_prevista_inicio: datetimeLocalParaIso(dataPrevistaInicio),
+      p_data_prevista_fim: datetimeLocalParaIso(dataPrevistaFim),
       p_observacao: observacao,
       p_itens: itens.map((item) => ({
         estoque_item_id: item.estoque_item_id,
