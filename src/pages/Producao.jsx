@@ -31,7 +31,7 @@ export default function Producao() {
           className={`tab ${aba === 'execucao' ? 'active' : ''}`}
           onClick={() => setAba('execucao')}
         >
-          Execução por talão — Fábrica 2
+          Execução
         </button>
       </div>
 
