@@ -4670,8 +4670,10 @@ td {
 
 .etiqueta-print-area {
   box-sizing: border-box;
-  width: 100mm;
-  min-height: 70mm;
+  display: flex;
+  flex-direction: column;
+  width: 85mm;
+  height: 115mm;
   margin: 0 auto;
   overflow: hidden;
   border: 1.5px solid #111;
@@ -4684,7 +4686,8 @@ td {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4mm 5mm 3mm;
+  min-height: 19mm;
+  padding: 4mm;
   border-bottom: 1.5px solid #111;
 }
 
@@ -4700,14 +4703,22 @@ td {
 }
 
 .etiqueta-marca {
-  font-size: 25pt;
-  font-weight: 700;
-  letter-spacing: -0.08em;
+  width: 29mm;
+  height: 11mm;
+  overflow: hidden;
+}
+
+.etiqueta-marca img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(2.75);
 }
 
 .etiqueta-conteudo {
+  flex: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 32mm;
+  grid-template-columns: minmax(0, 1fr) 29mm;
 }
 
 .etiqueta-dados {
@@ -4722,8 +4733,8 @@ td {
 .etiqueta-campo {
   display: grid;
   gap: 1mm;
-  min-height: 12mm;
-  padding: 2mm 3mm;
+  min-height: 15mm;
+  padding: 3mm;
   border-bottom: 1px solid #111;
 }
 
@@ -4732,21 +4743,21 @@ td {
 }
 
 .etiqueta-campo span {
-  font-size: 6.5pt;
+  font-size: 7.5pt;
   font-weight: 700;
 }
 
 .etiqueta-campo strong {
-  font-size: 11pt;
+  font-size: 12pt;
   line-height: 1.05;
 }
 
 .etiqueta-campo.destaque strong {
-  font-size: 15pt;
+  font-size: 16pt;
 }
 
 .etiqueta-secundaria .etiqueta-campo strong {
-  font-size: 8.5pt;
+  font-size: 9.5pt;
 }
 
 .etiqueta-qr {
@@ -4760,8 +4771,8 @@ td {
 }
 
 .etiqueta-qr img {
-  width: 25mm;
-  height: 25mm;
+  width: 24mm;
+  height: 24mm;
   image-rendering: pixelated;
 }
 
@@ -4778,7 +4789,8 @@ td {
 }
 
 .etiqueta-print-area footer {
-  padding: 2mm 4mm;
+  min-height: 9mm;
+  padding: 3mm 4mm;
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -4786,30 +4798,59 @@ td {
 
 @media print {
   @page {
-    size: 100mm 70mm;
+    size: 85mm 115mm;
     margin: 0;
   }
 
-  body * {
-    visibility: hidden !important;
+  html,
+  body,
+  #root {
+    width: 85mm !important;
+    height: 115mm !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
   }
 
-  .etiqueta-print-area,
-  .etiqueta-print-area * {
-    visibility: visible !important;
+  .app-shell {
+    display: block !important;
+    min-height: 0 !important;
+    background: #fff !important;
+  }
+
+  .sidebar,
+  .page > :not(.etiqueta-modal-overlay),
+  .no-print {
+    display: none !important;
+  }
+
+  .main-content,
+  .page,
+  .etiqueta-modal-overlay,
+  .etiqueta-modal,
+  .etiqueta-preview {
+    position: static !important;
+    display: block !important;
+    width: 85mm !important;
+    height: 115mm !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    box-shadow: none !important;
   }
 
   .etiqueta-print-area {
-    position: fixed;
-    inset: 0;
-    width: 100mm;
-    height: 70mm;
-    min-height: 70mm;
-    margin: 0;
-    border: 0;
-  }
-
-  .no-print {
-    display: none !important;
+    width: 81mm;
+    height: 111mm;
+    margin: 2mm;
+    border: 1px solid #111;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }
