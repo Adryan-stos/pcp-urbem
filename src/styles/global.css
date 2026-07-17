@@ -4415,6 +4415,117 @@ td {
   width: 100%;
 }
 
+.machine-planning-date-button {
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--urbem-green);
+  font-size: 10px;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+}
+
+.machine-planning-date-button:hover {
+  border-color: var(--urbem-green);
+  background: #f1f8f7;
+}
+
+.planning-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(5, 36, 34, .52);
+}
+
+.planning-modal {
+  display: grid;
+  gap: 18px;
+  width: min(540px, 100%);
+  padding: 22px;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .25);
+}
+
+.planning-modal-header,
+.planning-modal-header > div,
+.planning-modal-actions {
+  display: flex;
+  align-items: center;
+}
+
+.planning-modal-header {
+  justify-content: space-between;
+}
+
+.planning-modal-header > div {
+  gap: 10px;
+  color: var(--urbem-green);
+}
+
+.planning-modal-header span,
+.planning-modal-operation {
+  display: grid;
+  gap: 3px;
+}
+
+.planning-modal-header small,
+.planning-modal-operation span,
+.planning-modal-operation small {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.planning-modal-header button {
+  display: grid;
+  place-items: center;
+  padding: 7px;
+  border: 0;
+  border-radius: 9px;
+  background: #eef6f5;
+  color: var(--urbem-green);
+  cursor: pointer;
+}
+
+.planning-modal-operation {
+  padding: 13px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #f7fbfa;
+  color: var(--urbem-green);
+}
+
+.planning-modal-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.planning-modal-fields label {
+  display: grid;
+  gap: 6px;
+  color: var(--urbem-green);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.planning-modal-actions {
+  justify-content: flex-end;
+  gap: 9px;
+}
+
+@media (max-width: 560px) {
+  .planning-modal-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
 .machine-gantt-resource-group + .machine-gantt-resource-group {
   border-top: 1px solid var(--border);
 }
