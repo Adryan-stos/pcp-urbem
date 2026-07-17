@@ -31,7 +31,7 @@ export async function iniciarExecucaoOPLote(opLoteId, operador = '') {
 }
 
 export async function finalizarClassificacaoOPLote({ opLoteId, saidas, perdas, operador }) {
-  const { data, error } = await supabase.rpc('finalizar_classificacao_op_lote', {
+  const { data, error } = await supabase.rpc('finalizar_classificacao_op_lote_com_tempos', {
     p_op_lote_id: opLoteId,
     p_saidas: saidas,
     p_perdas: perdas,
@@ -43,7 +43,7 @@ export async function finalizarClassificacaoOPLote({ opLoteId, saidas, perdas, o
 }
 
 export async function finalizarEtapaOPLote(opLoteId, operador = '') {
-  const { data, error } = await supabase.rpc('finalizar_etapa_op_lote', {
+  const { data, error } = await supabase.rpc('finalizar_etapa_op_lote_com_tempos', {
     p_op_lote_id: opLoteId,
     p_operador: operador || null
   })
