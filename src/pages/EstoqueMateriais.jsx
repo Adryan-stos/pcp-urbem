@@ -41,15 +41,8 @@ export default function EstoqueMateriais() {
     )
   })
 
-  const totalPecas = pacotesFiltrados.reduce(
-    (total, pacote) => total + Number(pacote.quantidade_saldo || 0),
-    0
-  )
-
-  const totalM3 = pacotesFiltrados.reduce(
-    (total, pacote) => total + Number(pacote.volume_saldo_m3 || 0),
-    0
-  )
+  const quantidadeDisponivel = (pacote) => Math.max(Number(pacote.quantidade_saldo || 0) - Number(pacote.quantidade_reservada || 0), 0)
+  const volumeDisponivel = (pacote) => Math.max(Number(pacote.volume_saldo_m3 || 0) - Number(pacote.volume_reservado_m3 || 0), 0)
 
   const totalPacotesGeral = pacotes.length
 
@@ -59,9 +52,11 @@ export default function EstoqueMateriais() {
 
   const totalPacotesFiltrado = pacotesFiltrados.length
 
-  const totalPecasFiltrado = pacotesFiltrados.reduce( (total, pacote) => total + Number(pacote.quantidade_saldo || 0), 0 )
+  const totalPecasFiltrado = pacotesFiltrados.reduce((total, pacote) => total + quantidadeDisponivel(pacote), 0)
 
-  const totalVolumeFiltrado = pacotesFiltrados.reduce( (total, pacote) => total + Number(pacote.volume_saldo_m3 || 0), 0 )
+  const totalVolumeFiltrado = pacotesFiltrados.reduce((total, pacote) => total + volumeDisponivel(pacote), 0)
+  const totalPecasReservadas = pacotesFiltrados.reduce((total, pacote) => total + Number(pacote.quantidade_reservada || 0), 0)
+  const totalVolumeReservado = pacotesFiltrados.reduce((total, pacote) => total + Number(pacote.volume_reservado_m3 || 0), 0)
   
 
   return (
@@ -110,6 +105,16 @@ export default function EstoqueMateriais() {
         <div>
           <span>Volume disponível</span>
           <strong>{totalVolumeFiltrado.toFixed(4)} m³</strong>
+        </div>
+
+        <div>
+          <span>Peças reservadas</span>
+          <strong>{totalPecasReservadas.toFixed(0)}</strong>
+        </div>
+
+        <div>
+          <span>Volume reservado</span>
+          <strong>{totalVolumeReservado.toFixed(4)} m³</strong>
         </div>
       </section>
 
@@ -190,8 +195,8 @@ export default function EstoqueMateriais() {
                 <th>Material</th>
                 <th>NF / Fornecedor</th>
                 <th>Endereço</th>
-                <th>Peças</th>
-                <th>Volume</th>
+                <th>Peças: total / reservada / disponível</th>
+                <th>Volume: total / reservado / disponível</th>
                 <th>Situação</th>
               </tr>
             </thead>
@@ -200,7 +205,7 @@ export default function EstoqueMateriais() {
               {pacotesFiltrados.map((pacote) => (
                 <tr key={pacote.id}>
                   <td>
-                    <strong>{pacote.codigo_pacote}</strong>
+                    <strong>{pacote.codigo_pacote || pacote.codigo_item || '-'}</strong>
                     <br />
                     <small>
                       {pacote.created_at
@@ -239,15 +244,13 @@ export default function EstoqueMateriais() {
                   </td>
 
                   <td>
-                    <strong>{Number(pacote.quantidade_saldo || 0).toFixed(0)}</strong>
-                    <br />
-                    <small>peças</small>
+                    <strong>{Number(pacote.quantidade_saldo || 0).toFixed(0)} total</strong><br />
+                    <small>{Number(pacote.quantidade_reservada || 0).toFixed(0)} reservadas · {quantidadeDisponivel(pacote).toFixed(0)} disponíveis</small>
                   </td>
 
                   <td>
-                    <strong>{Number(pacote.volume_saldo_m3 || 0).toFixed(4)}</strong>
-                    <br />
-                    <small>m³</small>
+                    <strong>{Number(pacote.volume_saldo_m3 || 0).toFixed(4)} m³ total</strong><br />
+                    <small>{Number(pacote.volume_reservado_m3 || 0).toFixed(4)} reservado · {volumeDisponivel(pacote).toFixed(4)} disponível</small>
                   </td>
 
                   <td>
