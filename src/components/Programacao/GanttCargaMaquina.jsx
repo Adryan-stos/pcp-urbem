@@ -36,7 +36,8 @@ function normalizarOperacoes(processos, opLotes) {
       fim: op.data_prevista_fim,
       titulo: op.numero_op_lote,
       projeto: 'Produção por lote',
-      item: pacote?.codigo_pacote || [pacote?.especie, pacote?.classe].filter(Boolean).join(' ') || '-',
+      item: pacote?.codigo_pacote || pacote?.codigo_item || pacote?.codigo ||
+        [pacote?.especie, pacote?.classe].filter(Boolean).join(' ') || '-',
       quantidade: itens.reduce((total, item) => total + Number(item.quantidade_prevista || 0), 0),
       volume: itens.reduce((total, item) => total + Number(item.volume_previsto_m3 || 0), 0),
       status: op.status || '-'
