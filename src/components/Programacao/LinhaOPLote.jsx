@@ -1,4 +1,5 @@
 import { ArrowUp, ArrowDown, GripVertical } from 'lucide-react'
+import { obterSituacaoOperacao } from '../../utils/situacaoOperacao.js'
 
 export default function LinhaOPLote({
   opLote,
@@ -9,7 +10,8 @@ export default function LinhaOPLote({
   reorganizarFilaOPLote,
   moverPrioridadeOPLote,
   recursosSetor,
-  alterarRecursoOPLote
+  alterarRecursoOPLote,
+  alterarDataInicioOPLote
 }) {
   const itens = opLote.op_lote_itens || []
 
@@ -24,6 +26,7 @@ export default function LinhaOPLote({
   )
 
   const primeiroItem = itens[0]?.pacotes_materia_prima
+  const situacao = obterSituacaoOperacao(opLote)
 
   return (
     <tr
@@ -128,9 +131,14 @@ export default function LinhaOPLote({
       </td>
 
       <td>
-        {opLote.data_prevista_inicio
-          ? opLote.data_prevista_inicio.slice(0, 16).replace('T', ' ')
-          : '-'}
+        <div className="machine-date-editor">
+          <input
+            type="datetime-local"
+            value={opLote.data_prevista_inicio ? opLote.data_prevista_inicio.slice(0, 16) : ''}
+            onChange={(e) => alterarDataInicioOPLote(opLote.id, e.target.value)}
+          />
+          <span className={`machine-gantt-status ${situacao.classe}`}>{situacao.rotulo}</span>
+        </div>
       </td>
 
       <td>
