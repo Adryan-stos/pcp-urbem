@@ -4686,8 +4686,9 @@ td {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 19mm;
-  padding: 4mm;
+  flex: 0 0 17mm;
+  min-height: 17mm;
+  padding: 3mm 4mm;
   border-bottom: 1.5px solid #111;
 }
 
@@ -4723,6 +4724,8 @@ td {
 }
 
 .etiqueta-dados {
+  display: grid;
+  grid-template-rows: 21mm 14mm 15mm 17mm 19mm;
   border-right: 1.5px solid #111;
 }
 
@@ -4734,8 +4737,9 @@ td {
 .etiqueta-campo {
   display: grid;
   gap: 1mm;
-  min-height: 15mm;
-  padding: 3mm;
+  min-height: 0;
+  height: 100%;
+  padding: 2mm 3mm;
   border-bottom: 1px solid #111;
 }
 
@@ -4759,13 +4763,13 @@ td {
 
 .etiqueta-secundaria .etiqueta-campo strong {
   overflow-wrap: anywhere;
-  font-size: 9pt;
+  font-size: 8.5pt;
   line-height: 1.05;
 }
 
 .etiqueta-secundaria .etiqueta-campo {
-  min-height: 18mm;
-  padding: 2.5mm 3mm;
+  min-height: 0;
+  padding: 2mm 3mm;
 }
 
 .etiqueta-qr {
@@ -4797,13 +4801,12 @@ td {
 }
 
 .etiqueta-print-area footer {
-  flex-shrink: 0;
+  flex: 0 0 8mm;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2mm;
-  min-height: 9mm;
-  padding: 3mm 4mm;
+  min-height: 8mm;
+  padding: 2mm;
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -4815,7 +4818,8 @@ td {
 }
 
 .etiqueta-print-area footer span {
-  font-size: 6.5pt;
+  white-space: nowrap;
+  font-size: 6.2pt;
 }
 
 @media print {
