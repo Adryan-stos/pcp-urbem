@@ -24,7 +24,8 @@ export default function LinhaProcesso({
   alterarStatusPCP,
   moverPrioridade,
   recursosSetor,
-  alterarRecursoProcesso
+  alterarRecursoProcesso,
+  onEditarPlanejamento
 }) {
   const op = processo.ordens_producao
   const item = op?.itens_projeto
@@ -80,15 +81,12 @@ export default function LinhaProcesso({
 
       <td>
         <div className="machine-date-editor">
-          <input
-            type="datetime-local"
-            value={
-              processo.data_prevista_inicio
-                ? processo.data_prevista_inicio.slice(0, 16)
-                : ''
-            }
-            onChange={(e) => alterarDataInicio(processo.id, e.target.value)}
-          />
+          <button type="button" className="machine-planning-date-button" onClick={() => onEditarPlanejamento({
+            tipo: 'processo', registroId: processo.id,
+            titulo: op?.numero_op || 'OP sem número',
+            inicio: processo.data_prevista_inicio,
+            fim: processo.data_prevista_fim
+          })}>{processo.data_prevista_inicio ? new Date(processo.data_prevista_inicio).toLocaleString('pt-BR') : 'Definir datas'}</button>
           <span className={`machine-gantt-status ${situacao.classe}`}>{situacao.rotulo}</span>
         </div>
       </td>
