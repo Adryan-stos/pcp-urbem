@@ -7,6 +7,57 @@ export async function buscarTalaoExecucao(numeroTalao) {
     throw new Error('Informe um número de talão.')
   }
 
+  const { data: opLote, error: erroLote } = await supabase
+    .from('op_lotes')
+    .select(`
+      *,
+      op_lote_itens (
+        *,
+        pacotes_materia_prima (*)
+      )
+    `)
+    .eq('numero_op_lote', talaoLimpo)
+    .eq('ativo', true)
+    .maybeSingle()
+
+  if (erroLote) throw erroLote
+
+  if (opLote) {
+    const { data: paradaLote, error: erroParadaLote } = await supabase
+      .from('paradas_producao')
+      .select('id')
+      .eq('op_lote_id', opLote.id)
+      .eq('status', 'Em pausa')
+      .maybeSingle()
+
+    if (erroParadaLote) throw erroParadaLote
+    if (paradaLote) opLote.status = 'Em pausa'
+
+    const sequencias = { AUTOCLAVE: 10, GRADEADOR: 15, ESTUFA: 20, CLASSIFICADORA: 25 }
+    const talaoLote = {
+      ...opLote,
+      _tipo_operacao: 'lote',
+      numero_talao: opLote.numero_op_lote,
+      sequencia: sequencias[opLote.processo] || 0,
+      recurso: opLote.processo,
+      produto_entrada: opLote.buffer_entrada,
+      produto_saida: opLote.buffer_saida
+    }
+
+    const concluido = opLote.status === 'Concluído'
+    return {
+      talao: talaoLote,
+      podeExecutar: opLote.status === 'Programado',
+      mensagem: concluido
+        ? 'Esta OP já foi concluída e está disponível apenas para consulta.'
+        : opLote.status === 'Programado'
+          ? 'Processo liberado para execução.'
+          : `OP no status ${opLote.status}.`,
+      processosPendentes: [],
+      somenteConsulta: concluido
+    }
+  }
+
   const { data: talao, error } = await supabase
     .from('op_processos')
     .select(`
@@ -53,9 +104,13 @@ export async function buscarTalaoExecucao(numeroTalao) {
       )
     `)
     .eq('numero_talao', talaoLimpo)
-    .single()
+    .limit(1)
+    .maybeSingle()
 
   if (error) throw error
+  if (!talao) throw new Error('Nenhuma OP ou talão encontrado para o código informado.')
+
+  talao._tipo_operacao = 'processo'
   
   const { data: paradaAberta, error: erroParadaAberta } = await supabase
     .from('paradas_producao')
@@ -116,7 +171,17 @@ export async function buscarTalaoExecucao(numeroTalao) {
 }
 
 
-export async function iniciarExecucaoProducao(opProcessoId, dadosInicio = {}) {
+export async function iniciarExecucaoProducao(opProcessoId, dadosInicio = {}, tipoOperacao = 'processo') {
+  if (tipoOperacao === 'lote') {
+    const { data, error } = await supabase.rpc('iniciar_execucao_op_lote', {
+      p_op_lote_id: opProcessoId,
+      p_operador: dadosInicio.operador || null
+    })
+
+    if (error) throw error
+    return { ...data, _tipo_operacao: 'lote', numero_talao: data.numero_op_lote }
+  }
+
   const inicio = new Date().toISOString()
 
   // ==========================================================
@@ -148,15 +213,6 @@ export async function iniciarExecucaoProducao(opProcessoId, dadosInicio = {}) {
     .single()
 
   if (error) throw error
-
-  if (talao.status === 'Concluído') {
-    return {
-      talao,
-      podeExecutar: false,
-      mensagem: 'Este talão já foi concluído e não pode ser apontado novamente.',
-      processosPendentes: []
-    }
-  }
 
   return data
 }
