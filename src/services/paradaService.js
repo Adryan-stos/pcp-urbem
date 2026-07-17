@@ -2,7 +2,20 @@ import { supabase } from '../lib/supabase'
 
 const USUARIO_DESENVOLVIMENTO = 'DESENVOLVIMENTO'
 
-export async function iniciarParada(opProcessoId, dados = {}) {
+export async function iniciarParada(opProcessoId, dados = {}, tipoOperacao = 'processo') {
+  if (tipoOperacao === 'lote') {
+    const { data, error } = await supabase.rpc('pausar_execucao_op_lote', {
+      p_op_lote_id: opProcessoId,
+      p_motivo_parada_id: dados.motivoParadaId,
+      p_motivo: dados.motivo ?? 'Motivo cadastrado',
+      p_observacao: dados.observacao ?? null,
+      p_registrado_por: USUARIO_DESENVOLVIMENTO
+    })
+
+    if (error) throw error
+    return data
+  }
+
   const inicio = new Date().toISOString()
 
   const { data: paradaAberta, error: erroParadaAberta } = await supabase
@@ -49,7 +62,16 @@ export async function iniciarParada(opProcessoId, dados = {}) {
   return data
 }
 
-export async function retomarProducao(opProcessoId) {
+export async function retomarProducao(opProcessoId, tipoOperacao = 'processo') {
+  if (tipoOperacao === 'lote') {
+    const { data, error } = await supabase.rpc('retomar_execucao_op_lote', {
+      p_op_lote_id: opProcessoId
+    })
+
+    if (error) throw error
+    return data
+  }
+
   const fim = new Date()
   const fimISO = fim.toISOString()
 
@@ -92,11 +114,12 @@ export async function retomarProducao(opProcessoId) {
   return data
 }
 
-export async function listarParadasPorProcesso(opProcessoId) {
+export async function listarParadasPorProcesso(opProcessoId, tipoOperacao = 'processo') {
+  const coluna = tipoOperacao === 'lote' ? 'op_lote_id' : 'op_processo_id'
   const { data, error } = await supabase
     .from('paradas_producao')
     .select('*')
-    .eq('op_processo_id', opProcessoId)
+    .eq(coluna, opProcessoId)
     .order('inicio_parada', { ascending: true })
 
   if (error) throw error
