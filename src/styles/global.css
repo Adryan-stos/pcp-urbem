@@ -4055,6 +4055,122 @@ td {
 /* ==================================================
    GANTT DE CARGA MÁQUINA
 ================================================== */
+.machine-view-tabs {
+  display: flex;
+  width: fit-content;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.machine-view-tabs button {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  padding: 9px 15px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.machine-view-tabs button.active {
+  background: var(--urbem-green);
+  color: #fff;
+}
+
+.machine-gantt-page-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 18px;
+  align-items: start;
+}
+
+.machine-gantt-main {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.machine-gantt-summary {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(130px, 1fr));
+  gap: 10px;
+}
+
+.machine-gantt-summary div {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.machine-gantt-summary span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.machine-gantt-summary strong {
+  color: var(--urbem-green);
+  font-size: 19px;
+}
+
+.machine-gantt-summary .danger {
+  border-color: #e7a4a4;
+  background: #fff4f4;
+}
+
+.machine-gantt-summary .danger strong {
+  color: #a12424;
+}
+
+.machine-gantt-filters {
+  position: sticky;
+  top: 18px;
+  display: grid;
+  gap: 13px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: #fff;
+}
+
+.machine-gantt-filter-title {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  color: var(--urbem-green);
+}
+
+.machine-gantt-filter-title div,
+.machine-gantt-filters label {
+  display: grid;
+  gap: 5px;
+}
+
+.machine-gantt-filter-title span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.machine-gantt-filters label {
+  color: var(--urbem-green);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.machine-gantt-filters input,
+.machine-gantt-filters select {
+  width: 100%;
+}
+
 .machine-gantt-card {
   display: grid;
   gap: 16px;
@@ -4152,9 +4268,19 @@ td {
 }
 
 .machine-gantt-resource {
-  display: grid;
+  display: flex;
+  gap: 7px;
   align-content: center;
-  gap: 4px;
+  align-items: center;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.machine-gantt-resource span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
 }
 
 .machine-gantt-resource strong {
@@ -4203,6 +4329,24 @@ td {
   white-space: nowrap;
 }
 
+.machine-gantt-resource-group + .machine-gantt-resource-group {
+  border-top: 1px solid var(--border);
+}
+
+.machine-gantt-resource-group > .machine-gantt-row {
+  border-top: 0;
+}
+
+.machine-gantt-detail-row {
+  min-height: 78px;
+  border-top: 1px dashed #c7dcda;
+  background: #fbfdfd;
+}
+
+.machine-gantt-detail-row .machine-gantt-resource {
+  padding-left: 34px;
+}
+
 .machine-gantt-empty {
   padding: 28px;
   color: var(--muted);
@@ -4213,6 +4357,30 @@ td {
   .machine-gantt-header {
     align-items: stretch;
     flex-direction: column;
+  }
+}
+
+@media (max-width: 1180px) {
+  .machine-gantt-page-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .machine-gantt-filters {
+    position: static;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-row: 1;
+  }
+
+  .machine-gantt-filter-title,
+  .machine-gantt-filters .btn {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .machine-gantt-summary,
+  .machine-gantt-filters {
+    grid-template-columns: 1fr 1fr;
   }
 }
 
