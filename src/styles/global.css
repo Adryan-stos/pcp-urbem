@@ -4717,6 +4717,7 @@ td {
 
 .etiqueta-conteudo {
   flex: 1;
+  min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 29mm;
 }
@@ -4788,12 +4789,34 @@ td {
   font-weight: 700;
 }
 
+.etiqueta-rastreabilidade-status {
+  margin-top: 2mm;
+  padding: 1.5mm 2mm;
+  border: 1px solid #111;
+  font-size: 6pt !important;
+  letter-spacing: 0.04em;
+}
+
 .etiqueta-print-area footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2mm;
   min-height: 9mm;
   padding: 3mm 4mm;
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  border-top: 1.5px solid #111;
+}
+
+.etiqueta-print-area footer strong {
+  font-size: 7pt;
+}
+
+.etiqueta-print-area footer span {
+  font-size: 6.5pt;
 }
 
 @media print {
