@@ -11,7 +11,8 @@ export default function LinhaOPLote({
   moverPrioridadeOPLote,
   recursosSetor,
   alterarRecursoOPLote,
-  alterarDataInicioOPLote
+  alterarDataInicioOPLote,
+  onEditarPlanejamento
 }) {
   const itens = opLote.op_lote_itens || []
 
@@ -132,11 +133,12 @@ export default function LinhaOPLote({
 
       <td>
         <div className="machine-date-editor">
-          <input
-            type="datetime-local"
-            value={opLote.data_prevista_inicio ? opLote.data_prevista_inicio.slice(0, 16) : ''}
-            onChange={(e) => alterarDataInicioOPLote(opLote.id, e.target.value)}
-          />
+          <button type="button" className="machine-planning-date-button" onClick={() => onEditarPlanejamento({
+            tipo: 'lote', registroId: opLote.id,
+            titulo: opLote.numero_op_lote,
+            inicio: opLote.data_prevista_inicio,
+            fim: opLote.data_prevista_fim
+          })}>{opLote.data_prevista_inicio ? new Date(opLote.data_prevista_inicio).toLocaleString('pt-BR') : 'Definir datas'}</button>
           <span className={`machine-gantt-status ${situacao.classe}`}>{situacao.rotulo}</span>
         </div>
       </td>
