@@ -5031,21 +5031,27 @@ td {
 .estoque-quick-filters { display: flex; flex-wrap: wrap; gap: 8px; }
 .estoque-quick-filters button { padding: 8px 12px; border: 1px solid var(--border); border-radius: 999px; background: #f7fbfa; color: var(--urbem-green); font-size: 11px; font-weight: 900; }
 .estoque-quick-filters button.active { border-color: var(--urbem-green); background: var(--urbem-green); color: #fff; }
-.estoque-tree { display: grid; gap: 10px; }
+.estoque-tree { display: grid; gap: 18px; }
 .estoque-tree details { border: 1px solid var(--border); border-radius: 14px; background: #fbfdfc; overflow: hidden; }
-.estoque-tree summary { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 12px 14px; cursor: pointer; color: var(--urbem-green); }
+.estoque-tree summary { display: flex; justify-content: space-between; gap: 22px; align-items: center; padding: 16px 18px; cursor: pointer; color: var(--urbem-green); }
 .estoque-tree summary:hover { background: #edf7f4; }
 .estoque-tree summary span { color: var(--muted); font-size: 11px; text-align: right; }
-.estoque-tree-level { display: grid; gap: 8px; padding: 0 10px 10px 24px; }
+.estoque-tree-level { display: grid; gap: 12px; padding: 4px 14px 16px 30px; }
 .estoque-tree-level details { background: #fff; }
 .estoque-tree-bitolas { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; padding: 0 10px 10px 24px; }
 .estoque-tree-bitolas button { display: grid; gap: 4px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: #f8fbfa; color: var(--urbem-green); text-align: left; }
 .estoque-tree-bitolas button:hover, .estoque-tree-bitolas button.active { border-color: var(--urbem-green); background: #e6f4f0; box-shadow: 0 6px 16px rgba(20, 85, 80, .09); }
 .estoque-tree-bitolas button span { color: var(--muted); font-size: 10px; }
 .estoque-tree-bitolas button b { margin-top: 3px; }
+.estoque-table-card { padding: 0; overflow: hidden; }
+.estoque-table-header { display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: 18px 22px; border-bottom: 1px solid var(--border); }
+.estoque-table-header span { color: var(--muted); font-size: 10px; font-weight: 900; text-transform: uppercase; }
+.estoque-table-header h3 { margin: 3px 0; color: var(--urbem-green); }
+.estoque-table-header small { color: var(--muted); }
+.estoque-table-header + .table-wrapper { border-top: 0; }
 
 @media (max-width: 760px) {
-  .estoque-buffer-header, .estoque-tree summary { align-items: flex-start; flex-direction: column; }
+  .estoque-buffer-header, .estoque-tree summary, .estoque-table-header { align-items: flex-start; flex-direction: column; }
   .estoque-tree summary span { text-align: left; }
   .estoque-tree-level, .estoque-tree-bitolas { padding-left: 10px; }
 }
