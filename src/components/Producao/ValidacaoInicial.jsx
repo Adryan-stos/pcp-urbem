@@ -1,4 +1,8 @@
+import { useState } from 'react'
+import { Printer } from 'lucide-react'
 import { VALIDACOES_PROCESSO } from '../../config/validacoesProcesso.js'
+import { listarEtiquetasClassificacao } from '../../services/execucaoOpLoteService.js'
+import ModalEtiquetasClassificacao from '../Etiquetas/ModalEtiquetasClassificacao.jsx'
 
 export default function ValidacaoInicial({
   talao,
@@ -12,8 +16,26 @@ export default function ValidacaoInicial({
 }) 
 
 {
+  const [etiquetas, setEtiquetas] = useState([])
+  const [carregandoEtiquetas, setCarregandoEtiquetas] = useState(false)
+  const [erroEtiquetas, setErroEtiquetas] = useState('')
   const regra = VALIDACOES_PROCESSO[talao.processo] || { exigeQuantidade: false, exigeDimensao: true, loteEntrada: 'Talão Anterior' }
   const ehLote = talao._tipo_operacao === 'lote'
+  const permiteReimpressao = ehLote && talao.processo === 'CLASSIFICADORA' && talao.status === 'Concluído'
+
+  async function abrirReimpressao() {
+    try {
+      setCarregandoEtiquetas(true)
+      setErroEtiquetas('')
+      const dados = await listarEtiquetasClassificacao(talao.id)
+      if (!dados.length) throw new Error('Nenhuma etiqueta foi encontrada para esta OP.')
+      setEtiquetas(dados)
+    } catch (error) {
+      setErroEtiquetas(error.message)
+    } finally {
+      setCarregandoEtiquetas(false)
+    }
+  }
 
   return (
     <section className="execucao-talao-card">
@@ -53,6 +75,20 @@ export default function ValidacaoInicial({
               ))}
             </ul>
           )}
+        </div>
+      )}
+
+      {erroEtiquetas && <div className="alert">{erroEtiquetas}</div>}
+
+      {permiteReimpressao && (
+        <div className="execucao-reimpressao-card">
+          <div>
+            <strong>Etiquetas geradas pela classificação</strong>
+            <span>Consulte e imprima novamente os pacotes desta OP sem movimentar o estoque.</span>
+          </div>
+          <button type="button" className="btn primary" onClick={abrirReimpressao} disabled={carregandoEtiquetas}>
+            <Printer size={17} /> {carregandoEtiquetas ? 'Carregando...' : 'Reimprimir etiquetas'}
+          </button>
         </div>
       )}
 
@@ -135,6 +171,14 @@ export default function ValidacaoInicial({
           />
         </div>
       )}
+
+      <ModalEtiquetasClassificacao
+        aberto={Boolean(etiquetas.length)}
+        saidas={etiquetas}
+        opLote={talao}
+        reimpressao
+        onFechar={() => setEtiquetas([])}
+      />
 
       <button
         type="button"
