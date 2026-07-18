@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { RefreshCw } from 'lucide-react'
+import { ChevronDown, ChevronUp, RefreshCw } from 'lucide-react'
 import { listarEstoqueMateriais } from '../services/estoqueMaterialService.js'
 
 export default function EstoqueMateriais() {
@@ -9,6 +9,7 @@ export default function EstoqueMateriais() {
   const [filtros, setFiltros] = useState({ nf: '', fornecedor: '', material: '', buffer: '', rua: '', secao: '' })
   const [filtroRapido, setFiltroRapido] = useState('todos')
   const [grupoSelecionado, setGrupoSelecionado] = useState(null)
+  const [tabelaAberta, setTabelaAberta] = useState(true)
 
   const quantidadeDisponivel = (pacote) => Math.max(Number(pacote.quantidade_saldo || 0) - Number(pacote.quantidade_reservada || 0), 0)
   const volumeDisponivel = (pacote) => Math.max(Number(pacote.volume_saldo_m3 || 0) - Number(pacote.volume_reservado_m3 || 0), 0)
@@ -267,8 +268,15 @@ export default function EstoqueMateriais() {
         </div>
       </section>
 
-      <section className="table-card">
-        <div className="table-wrapper">
+      <section className="table-card estoque-table-card">
+        <div className="estoque-table-header">
+          <div><span>Detalhamento</span><h3>Pacotes do estoque {grupoSelecionado ? 'selecionado' : 'filtrado'}</h3><small>{pacotesFiltrados.length} pacote(s)</small></div>
+          <button type="button" className="btn ghost" onClick={() => setTabelaAberta((aberta) => !aberta)}>
+            {tabelaAberta ? <ChevronUp size={17} /> : <ChevronDown size={17} />}
+            {tabelaAberta ? 'Recolher tabela' : 'Exibir tabela'}
+          </button>
+        </div>
+        {tabelaAberta && <div className="table-wrapper">
           <table>
             <thead>
               <tr>
@@ -352,7 +360,7 @@ export default function EstoqueMateriais() {
               )}
             </tbody>
           </table>
-        </div>
+        </div>}
       </section>
     </div>
   )
