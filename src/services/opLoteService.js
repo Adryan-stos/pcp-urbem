@@ -25,6 +25,7 @@ export async function listarOPLotesPorProcesso(processo) {
     `)
     .eq('ativo', true)
     .eq('processo', processoNormalizado)
+    .in('status', ['Aguardando programação', 'Programado', 'Em produção', 'Em pausa'])
     .order('prioridade', { ascending: true, nullsFirst: false })
     .order('created_at', { ascending: false })
 
