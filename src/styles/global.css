@@ -4934,7 +4934,9 @@ td {
 
 .execucao-lote-card {
   display: grid;
+  grid-template-rows: auto auto 1fr auto;
   gap: 16px;
+  min-width: 0;
   padding: 20px;
   border: 1px solid var(--border);
   border-radius: 22px;
@@ -5063,6 +5065,10 @@ td {
   gap: 14px;
 }
 
+.execucao-lote-card > header > div {
+  min-width: 0;
+}
+
 .execucao-lote-card header span,
 .execucao-lote-resumo span {
   color: var(--muted);
@@ -5090,16 +5096,22 @@ td {
 
 .execucao-lote-resumo {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 
 .execucao-lote-resumo > div {
   display: grid;
+  min-width: 0;
   gap: 4px;
   padding: 12px;
   border-radius: 14px;
   background: rgba(220, 240, 245, 0.45);
+}
+
+.execucao-lote-resumo strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .execucao-lote-pacotes {
@@ -5120,6 +5132,12 @@ td {
 .execucao-lote-actions {
   display: flex;
   justify-content: flex-end;
+  align-self: end;
+  min-width: 0;
+}
+
+.execucao-lote-actions .btn {
+  max-width: 100%;
 }
 
 .execucao-tempos-grid {
