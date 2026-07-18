@@ -7,6 +7,12 @@ export default function EstoqueMateriais() {
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState('')
   const [filtros, setFiltros] = useState({ nf: '', fornecedor: '', material: '', buffer: '', rua: '', secao: '' })
+  const [filtroRapido, setFiltroRapido] = useState('todos')
+  const [grupoSelecionado, setGrupoSelecionado] = useState(null)
+
+  const quantidadeDisponivel = (pacote) => Math.max(Number(pacote.quantidade_saldo || 0) - Number(pacote.quantidade_reservada || 0), 0)
+  const volumeDisponivel = (pacote) => Math.max(Number(pacote.volume_saldo_m3 || 0) - Number(pacote.volume_reservado_m3 || 0), 0)
+  const reservaInconsistente = (pacote) => Number(pacote.quantidade_reservada || 0) > Number(pacote.quantidade_saldo || 0) || Number(pacote.volume_reservado_m3 || 0) > Number(pacote.volume_saldo_m3 || 0)
 
   async function carregar() {
     try {
@@ -26,12 +32,12 @@ export default function EstoqueMateriais() {
     carregar()
   }, [])
 
-  const pacotesFiltrados = pacotes.filter((pacote) => {
+  const pacotesBaseFiltrados = pacotes.filter((pacote) => {
     const nf = pacote.recebimentos_materia_prima?.numero_nf || ''
     const fornecedor = pacote.recebimentos_materia_prima?.fornecedor || ''
     const material = `${pacote.especie || ''} ${pacote.classe || ''} ${pacote.espessura_mm || ''} ${pacote.largura_mm || ''} ${pacote.comprimento_mm || ''}`
 
-    return (
+    const atendeBusca = (
       nf.toLowerCase().includes(filtros.nf.toLowerCase()) &&
       fornecedor.toLowerCase().includes(filtros.fornecedor.toLowerCase()) &&
       material.toLowerCase().includes(filtros.material.toLowerCase()) &&
@@ -39,10 +45,39 @@ export default function EstoqueMateriais() {
       String(pacote.rua || '').toLowerCase().includes(filtros.rua.toLowerCase()) &&
       String(pacote.secao || '').toLowerCase().includes(filtros.secao.toLowerCase())
     )
+    const atendeRapido = filtroRapido === 'todos' ||
+      (filtroRapido === 'disponivel' && quantidadeDisponivel(pacote) > 0) ||
+      (filtroRapido === 'reservado' && Number(pacote.quantidade_reservada || 0) > 0) ||
+      (filtroRapido === 'inconsistente' && reservaInconsistente(pacote)) ||
+      (filtroRapido === 'minimo' && Number(pacote.estoque_minimo || 0) > 0 && quantidadeDisponivel(pacote) < Number(pacote.estoque_minimo))
+    return atendeBusca && atendeRapido
   })
 
-  const quantidadeDisponivel = (pacote) => Math.max(Number(pacote.quantidade_saldo || 0) - Number(pacote.quantidade_reservada || 0), 0)
-  const volumeDisponivel = (pacote) => Math.max(Number(pacote.volume_saldo_m3 || 0) - Number(pacote.volume_reservado_m3 || 0), 0)
+  const pacotesFiltrados = grupoSelecionado
+    ? pacotesBaseFiltrados.filter((pacote) => grupoSelecionado.ids.includes(pacote.id))
+    : pacotesBaseFiltrados
+
+  const arvoreEstoque = pacotesBaseFiltrados.reduce((arvore, pacote) => {
+    const buffer = pacote.buffer_atual || 'SEM BUFFER'
+    const especie = pacote.especie || 'SEM ESPÉCIE'
+    const classe = pacote.classe || 'SEM CLASSE'
+    const bitola = `${pacote.espessura_mm || '-'} × ${pacote.largura_mm || '-'} × ${pacote.comprimento_mm || '-'}`
+    arvore[buffer] ??= {}
+    arvore[buffer][especie] ??= {}
+    arvore[buffer][especie][classe] ??= {}
+    arvore[buffer][especie][classe][bitola] ??= []
+    arvore[buffer][especie][classe][bitola].push(pacote)
+    return arvore
+  }, {})
+
+  function resumoGrupo(lista) {
+    return {
+      pacotes: lista.length,
+      disponiveis: lista.reduce((total, item) => total + quantidadeDisponivel(item), 0),
+      reservadas: lista.reduce((total, item) => total + Number(item.quantidade_reservada || 0), 0),
+      volume: lista.reduce((total, item) => total + volumeDisponivel(item), 0)
+    }
+  }
 
   const totalPacotesGeral = pacotes.length
 
@@ -57,19 +92,6 @@ export default function EstoqueMateriais() {
   const totalVolumeFiltrado = pacotesFiltrados.reduce((total, pacote) => total + volumeDisponivel(pacote), 0)
   const totalPecasReservadas = pacotesFiltrados.reduce((total, pacote) => total + Number(pacote.quantidade_reservada || 0), 0)
   const totalVolumeReservado = pacotesFiltrados.reduce((total, pacote) => total + Number(pacote.volume_reservado_m3 || 0), 0)
-  const buffers = Object.values(pacotes.reduce((grupos, pacote) => {
-    const nome = pacote.buffer_atual || 'SEM BUFFER'
-    if (!grupos[nome]) grupos[nome] = { nome, pacotes: 0, pecas: 0, reservadas: 0, disponiveis: 0, volume: 0, volumeReservado: 0, volumeDisponivel: 0 }
-    const grupo = grupos[nome]
-    grupo.pacotes += 1
-    grupo.pecas += Number(pacote.quantidade_saldo || 0)
-    grupo.reservadas += Number(pacote.quantidade_reservada || 0)
-    grupo.disponiveis += quantidadeDisponivel(pacote)
-    grupo.volume += Number(pacote.volume_saldo_m3 || 0)
-    grupo.volumeReservado += Number(pacote.volume_reservado_m3 || 0)
-    grupo.volumeDisponivel += volumeDisponivel(pacote)
-    return grupos
-  }, {})).sort((a, b) => a.nome.localeCompare(b.nome))
   
 
   return (
@@ -133,18 +155,47 @@ export default function EstoqueMateriais() {
 
       <section className="estoque-buffer-section">
         <div className="estoque-buffer-header">
-          <div><span>Visão por estoque</span><h3>Buffers e materiais disponíveis</h3></div>
-          <button type="button" className={`estoque-buffer-card todos ${!filtros.buffer ? 'active' : ''}`} onClick={() => setFiltros({ ...filtros, buffer: '' })}>Todos os buffers</button>
+          <div><span>Visão hierárquica</span><h3>Buffer → espécie → classe → bitola</h3></div>
+          {grupoSelecionado && <button type="button" className="btn ghost" onClick={() => setGrupoSelecionado(null)}>Remover seleção</button>}
         </div>
-        <div className="estoque-buffer-grid">
-          {buffers.map((buffer) => (
-            <button type="button" key={buffer.nome} className={`estoque-buffer-card ${filtros.buffer === buffer.nome ? 'active' : ''}`} onClick={() => setFiltros({ ...filtros, buffer: buffer.nome })}>
-              <span>{buffer.nome}</span>
-              <strong>{buffer.pacotes} pacotes</strong>
-              <div><small>Disponível</small><b>{buffer.disponiveis.toFixed(0)} un. · {buffer.volumeDisponivel.toFixed(4)} m³</b></div>
-              <div><small>Reservado</small><b>{buffer.reservadas.toFixed(0)} un. · {buffer.volumeReservado.toFixed(4)} m³</b></div>
-            </button>
+        <div className="estoque-quick-filters">
+          {[['todos', 'Todos'], ['disponivel', 'Somente disponível'], ['reservado', 'Somente reservado'], ['inconsistente', 'Com inconsistência'], ['minimo', 'Abaixo do mínimo']].map(([valor, rotulo]) => (
+            <button type="button" key={valor} className={filtroRapido === valor ? 'active' : ''} onClick={() => { setFiltroRapido(valor); setGrupoSelecionado(null) }}>{rotulo}</button>
           ))}
+        </div>
+        <div className="estoque-tree">
+          {Object.entries(arvoreEstoque).sort(([a], [b]) => a.localeCompare(b)).map(([buffer, especies]) => {
+            const pacotesBuffer = Object.values(especies).flatMap((classes) => Object.values(classes).flatMap((bitolas) => Object.values(bitolas).flat()))
+            const resumoBuffer = resumoGrupo(pacotesBuffer)
+            return <details key={buffer} open>
+              <summary><strong>{buffer}</strong><span>{resumoBuffer.pacotes} pacotes · {resumoBuffer.disponiveis.toFixed(0)} un. disponíveis · {resumoBuffer.volume.toFixed(4)} m³</span></summary>
+              <div className="estoque-tree-level">
+                {Object.entries(especies).sort(([a], [b]) => a.localeCompare(b)).map(([especie, classes]) => {
+                  const pacotesEspecie = Object.values(classes).flatMap((bitolas) => Object.values(bitolas).flat())
+                  return <details key={especie} open>
+                    <summary><strong>{especie}</strong><span>{resumoGrupo(pacotesEspecie).disponiveis.toFixed(0)} un. disponíveis</span></summary>
+                    <div className="estoque-tree-level">
+                      {Object.entries(classes).sort(([a], [b]) => a.localeCompare(b)).map(([classe, bitolas]) => (
+                        <details key={classe}>
+                          <summary><strong>{classe}</strong><span>{resumoGrupo(Object.values(bitolas).flat()).pacotes} pacotes</span></summary>
+                          <div className="estoque-tree-bitolas">
+                            {Object.entries(bitolas).sort(([a], [b]) => a.localeCompare(b)).map(([bitola, lista]) => {
+                              const resumo = resumoGrupo(lista)
+                              const ativo = grupoSelecionado?.chave === `${buffer}|${especie}|${classe}|${bitola}`
+                              return <button type="button" key={bitola} className={ativo ? 'active' : ''} onClick={() => setGrupoSelecionado({ chave: `${buffer}|${especie}|${classe}|${bitola}`, ids: lista.map((item) => item.id) })}>
+                                <strong>{bitola} mm</strong><span>{resumo.pacotes} pacotes</span><span>{resumo.disponiveis.toFixed(0)} peças disponíveis</span><span>{resumo.reservadas.toFixed(0)} reservadas</span><b>{resumo.volume.toFixed(4)} m³</b>
+                              </button>
+                            })}
+                          </div>
+                        </details>
+                      ))}
+                    </div>
+                  </details>
+                })}
+              </div>
+            </details>
+          })}
+          {!Object.keys(arvoreEstoque).length && <div className="empty-card">Nenhum estoque encontrado para os filtros selecionados.</div>}
         </div>
       </section>
 
@@ -159,14 +210,14 @@ export default function EstoqueMateriais() {
             type="button"
             className="filter-clear"
             onClick={() =>
-              setFiltros({
+              { setFiltros({
                 nf: '',
                 fornecedor: '',
                 material: '',
                 buffer: '',
                 rua: '',
                 secao: ''
-              })
+              }); setFiltroRapido('todos'); setGrupoSelecionado(null) }
             }
           >
             Limpar
