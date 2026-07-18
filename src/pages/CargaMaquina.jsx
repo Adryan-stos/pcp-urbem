@@ -182,7 +182,8 @@ async function carregarDadosGantt() {
             )
           )
         `)
-        .eq('ativo', true),
+        .eq('ativo', true)
+        .in('status', ['Liberado para programação', 'Programado', 'Em produção', 'Em pausa']),
       supabase
         .from('op_lotes')
         .select(`
@@ -192,6 +193,7 @@ async function carregarDadosGantt() {
           )
         `)
         .eq('ativo', true)
+        .in('status', ['Aguardando programação', 'Programado', 'Em produção', 'Em pausa'])
     ])
 
     if (recursosResultado.error) throw recursosResultado.error
