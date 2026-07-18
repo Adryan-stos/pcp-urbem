@@ -57,6 +57,19 @@ export default function EstoqueMateriais() {
   const totalVolumeFiltrado = pacotesFiltrados.reduce((total, pacote) => total + volumeDisponivel(pacote), 0)
   const totalPecasReservadas = pacotesFiltrados.reduce((total, pacote) => total + Number(pacote.quantidade_reservada || 0), 0)
   const totalVolumeReservado = pacotesFiltrados.reduce((total, pacote) => total + Number(pacote.volume_reservado_m3 || 0), 0)
+  const buffers = Object.values(pacotes.reduce((grupos, pacote) => {
+    const nome = pacote.buffer_atual || 'SEM BUFFER'
+    if (!grupos[nome]) grupos[nome] = { nome, pacotes: 0, pecas: 0, reservadas: 0, disponiveis: 0, volume: 0, volumeReservado: 0, volumeDisponivel: 0 }
+    const grupo = grupos[nome]
+    grupo.pacotes += 1
+    grupo.pecas += Number(pacote.quantidade_saldo || 0)
+    grupo.reservadas += Number(pacote.quantidade_reservada || 0)
+    grupo.disponiveis += quantidadeDisponivel(pacote)
+    grupo.volume += Number(pacote.volume_saldo_m3 || 0)
+    grupo.volumeReservado += Number(pacote.volume_reservado_m3 || 0)
+    grupo.volumeDisponivel += volumeDisponivel(pacote)
+    return grupos
+  }, {})).sort((a, b) => a.nome.localeCompare(b.nome))
   
 
   return (
@@ -115,6 +128,23 @@ export default function EstoqueMateriais() {
         <div>
           <span>Volume reservado</span>
           <strong>{totalVolumeReservado.toFixed(4)} m³</strong>
+        </div>
+      </section>
+
+      <section className="estoque-buffer-section">
+        <div className="estoque-buffer-header">
+          <div><span>Visão por estoque</span><h3>Buffers e materiais disponíveis</h3></div>
+          <button type="button" className={`estoque-buffer-card todos ${!filtros.buffer ? 'active' : ''}`} onClick={() => setFiltros({ ...filtros, buffer: '' })}>Todos os buffers</button>
+        </div>
+        <div className="estoque-buffer-grid">
+          {buffers.map((buffer) => (
+            <button type="button" key={buffer.nome} className={`estoque-buffer-card ${filtros.buffer === buffer.nome ? 'active' : ''}`} onClick={() => setFiltros({ ...filtros, buffer: buffer.nome })}>
+              <span>{buffer.nome}</span>
+              <strong>{buffer.pacotes} pacotes</strong>
+              <div><small>Disponível</small><b>{buffer.disponiveis.toFixed(0)} un. · {buffer.volumeDisponivel.toFixed(4)} m³</b></div>
+              <div><small>Reservado</small><b>{buffer.reservadas.toFixed(0)} un. · {buffer.volumeReservado.toFixed(4)} m³</b></div>
+            </button>
+          ))}
         </div>
       </section>
 
@@ -202,8 +232,9 @@ export default function EstoqueMateriais() {
             </thead>
 
             <tbody>
-              {pacotesFiltrados.map((pacote) => (
-                <tr key={pacote.id}>
+              {pacotesFiltrados.map((pacote) => {
+                const reservaInconsistente = Number(pacote.quantidade_reservada || 0) > Number(pacote.quantidade_saldo || 0) || Number(pacote.volume_reservado_m3 || 0) > Number(pacote.volume_saldo_m3 || 0)
+                return <tr key={pacote.id} className={reservaInconsistente ? 'estoque-reserva-inconsistente' : ''}>
                   <td>
                     <strong>{pacote.codigo_pacote || pacote.codigo_item || '-'}</strong>
                     <br />
@@ -254,12 +285,12 @@ export default function EstoqueMateriais() {
                   </td>
 
                   <td>
-                    <span className="op-status liberado">
-                      {pacote.status || 'Disponível'}
+                    <span className={`op-status ${reservaInconsistente ? 'cancelado' : 'liberado'}`}>
+                      {reservaInconsistente ? 'Reserva inconsistente' : pacote.status || 'Disponível'}
                     </span>
                   </td>
                 </tr>
-              ))}
+              })}
 
               {!pacotesFiltrados.length && (
                 <tr>
