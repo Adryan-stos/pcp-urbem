@@ -75,7 +75,7 @@ export default function CentroExecucao({ onExecutar }) {
           Carregando talões...
         </div>
       ) : (
-        <div className="centro-execucao-grid">
+        <div className="execucao-lotes-grid">
           {cardsFiltrados.map((talao, index) => (
             <CardExecucao
               key={talao.id}
