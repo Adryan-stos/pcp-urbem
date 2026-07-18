@@ -51,3 +51,36 @@ export async function finalizarEtapaOPLote(opLoteId, operador = '') {
   if (error) throw error
   return data
 }
+
+export async function listarEtiquetasClassificacao(opLoteId) {
+  const { data: classificacoes, error } = await supabase
+    .from('op_lote_classificacoes')
+    .select('*')
+    .eq('op_lote_id', opLoteId)
+    .order('created_at', { ascending: true })
+
+  if (error) throw error
+  if (!classificacoes?.length) return []
+
+  const pacoteIds = classificacoes.map((item) => item.pacote_saida_id).filter(Boolean)
+  const { data: pacotes, error: erroPacotes } = await supabase
+    .from('pacotes_materia_prima')
+    .select('*')
+    .in('id', pacoteIds)
+
+  if (erroPacotes) throw erroPacotes
+  const pacotesPorId = Object.fromEntries((pacotes || []).map((pacote) => [pacote.id, pacote]))
+
+  return classificacoes.map((item) => ({
+    classificacao_id: item.id,
+    pacote_origem_id: item.pacote_origem_id,
+    pacote_saida_id: item.pacote_saida_id,
+    classe: item.classe_saida,
+    espessura_mm: item.espessura_mm,
+    largura_mm: item.largura_mm,
+    comprimento_mm: item.comprimento_mm,
+    quantidade: item.quantidade_saida,
+    volume_m3: item.volume_saida_m3,
+    pacote: pacotesPorId[item.pacote_saida_id] || {}
+  }))
+}
