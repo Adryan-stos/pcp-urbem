@@ -4865,14 +4865,17 @@ td {
   }
 
   html,
-  body,
-  #root {
+  body {
     width: 85mm !important;
     height: 115mm !important;
     min-height: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
     overflow: hidden !important;
+  }
+
+  body > #root {
+    display: none !important;
   }
 
   .app-shell {
@@ -5281,21 +5284,52 @@ td {
 }
 
 .classificacao-pacote-actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1.3fr repeat(4, minmax(105px, .7fr)) 42px;
   align-items: end;
-  justify-content: space-between;
   gap: 14px;
   margin-top: 12px;
 }
 
+.classificacao-pacote-actions > .btn { grid-column: 1 / 3; justify-self: start; }
+
 .classificacao-pacote-actions label {
   display: grid;
   gap: 5px;
-  width: 130px;
+  grid-column: 5;
+  width: 100%;
   color: var(--urbem-green);
   font-size: 12px;
   font-weight: 800;
 }
+
+.etiqueta-classificacao { position: relative; }
+.etiqueta-reimpressao {
+  position: absolute;
+  z-index: 2;
+  top: 18mm;
+  right: 2mm;
+  padding: 1mm 2mm;
+  border: 1px solid #111;
+  background: #fff;
+  font-size: 7pt;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.execucao-reimpressao-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #f1f8f7;
+}
+.execucao-reimpressao-card > div { display: grid; gap: 4px; }
+.execucao-reimpressao-card span { color: var(--muted); font-size: 12px; }
 
 @media (max-width: 900px) {
   .execucao-tempos-grid {
@@ -5304,6 +5338,9 @@ td {
   .classificacao-saida-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+  .classificacao-pacote-actions { grid-template-columns: 1fr 1fr; }
+  .classificacao-pacote-actions > .btn { grid-column: 1; }
+  .classificacao-pacote-actions label { grid-column: 2; }
 
   .classificacao-saida-legenda {
     display: none;
