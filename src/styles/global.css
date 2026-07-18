@@ -4966,6 +4966,13 @@ td {
 .execucao-lote-status.late { background: #ffe8e8; color: #a12424; }
 .execucao-lote-status.upcoming { background: #f0eaff; color: #624099; }
 .execucao-lote-status.scheduled { background: #e4f7ec; color: #17683e; }
+.execucao-lote-status.blocked { background: #e5e7eb; color: #374151; }
+
+.execucao-lote-card.blocked {
+  border-color: #4b5563;
+  background: #f8fafc;
+  opacity: .82;
+}
 
 .execucao-lote-card.paused,
 .execucao-lote-card.late {
