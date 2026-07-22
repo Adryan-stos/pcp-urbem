@@ -5303,7 +5303,8 @@ td {
   font-weight: 800;
 }
 
-.etiqueta-classificacao { position: relative; }
+.etiqueta-classificacao,
+.etiqueta-operacao { position: relative; }
 .etiqueta-reimpressao {
   position: absolute;
   z-index: 2;
