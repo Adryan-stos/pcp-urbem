@@ -9,6 +9,8 @@ import {
   reordenarOPLotes
 } from '../services/opLoteService.js'
 import ModalOPLote from '../components/Programacao/ModalOPLote.jsx'
+import ModalOPFinger from '../components/Programacao/ModalOPFinger.jsx'
+import { criarOPAPartirDaFinger } from '../services/opService.js'
 import PlannerFabrica1 from '../components/Programacao/PlannerFabrica1.jsx'
 import PlannerFabrica2 from '../components/Programacao/PlannerFabrica2.jsx'
 import GanttCargaMaquina from '../components/Programacao/GanttCargaMaquina.jsx'
@@ -53,6 +55,7 @@ export default function CargaMaquina() {
   const [linhaSobre, setLinhaSobre] = useState(null)
   const [opLotes, setOpLotes] = useState([])
   const [modalOPLoteAberto, setModalOPLoteAberto] = useState(false)
+  const [modalOPFingerAberto, setModalOPFingerAberto] = useState(false)
   const [opLoteEdicao, setOpLoteEdicao] = useState(null)
   const [opLoteCancelamento, setOpLoteCancelamento] = useState(null)
   const [motivoCancelamento, setMotivoCancelamento] = useState('')
@@ -182,7 +185,8 @@ async function carregarDadosGantt() {
             )
           )
         `)
-        .eq('ativo', true),
+        .eq('ativo', true)
+        .in('status', ['Liberado para programação', 'Programado', 'Em produção', 'Em pausa']),
       supabase
         .from('op_lotes')
         .select(`
@@ -192,6 +196,7 @@ async function carregarDadosGantt() {
           )
         `)
         .eq('ativo', true)
+        .in('status', ['Aguardando programação', 'Programado', 'Em produção', 'Em pausa'])
     ])
 
     if (recursosResultado.error) throw recursosResultado.error
@@ -546,6 +551,20 @@ async function aplicarPlanejamento(operacao) {
       }
     }
 
+    async function salvarOPFinger({ item, blankSaidaId }) {
+      try {
+        setSalvandoOPLote(true)
+        setErro('')
+        await criarOPAPartirDaFinger(item, blankSaidaId)
+        setModalOPFingerAberto(false)
+        await carregarProcessos()
+      } catch (error) {
+        setErro(error.message)
+      } finally {
+        setSalvandoOPLote(false)
+      }
+    }
+
     async function confirmarCancelamentoOPLote() {
       if (!motivoCancelamento.trim()) { setErro('Informe o motivo do cancelamento.'); return }
       try {
@@ -754,6 +773,13 @@ async function aplicarPlanejamento(operacao) {
           </button>
         </div>
       )}
+      {!ehFabrica1 && setorAtual === 'OTIMIZADORA/FINGER' && (
+        <div className="machine-lote-actions">
+          <button type="button" className="btn primary" onClick={() => setModalOPFingerAberto(true)}>
+            + Nova OP da Finger
+          </button>
+        </div>
+      )}
       <section className="itens-kpi-grid">
         <div className="kpi-card">
           <span>Itens no setor</span>
@@ -824,6 +850,13 @@ async function aplicarPlanejamento(operacao) {
             opEdicao={opLoteEdicao}
             onCancelar={() => { setModalOPLoteAberto(false); setOpLoteEdicao(null) }}
             onSalvar={salvarOPLote}
+            carregando={salvandoOPLote}
+          />
+
+          <ModalOPFinger
+            aberto={modalOPFingerAberto}
+            onCancelar={() => setModalOPFingerAberto(false)}
+            onSalvar={salvarOPFinger}
             carregando={salvandoOPLote}
           />
 

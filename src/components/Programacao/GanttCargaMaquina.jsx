@@ -63,6 +63,7 @@ export default function GanttCargaMaquina({ recursos, processos, opLotes, onEdit
   const [status, setStatus] = useState('')
   const [busca, setBusca] = useState('')
   const [horizonteDias, setHorizonteDias] = useState(3)
+  const [densidade, setDensidade] = useState('normal')
   const [expandidos, setExpandidos] = useState(new Set())
   const fim = somarDias(inicio, horizonteDias - 1)
   const operacoes = useMemo(() => normalizarOperacoes(processos, opLotes), [processos, opLotes])
@@ -85,7 +86,14 @@ export default function GanttCargaMaquina({ recursos, processos, opLotes, onEdit
   })
   const inicioMs = new Date(`${inicio}T00:00:00`).getTime()
   const fimMs = new Date(`${somarDias(fim, 1)}T00:00:00`).getTime()
-  const duracao = fimMs - inicioMs
+  const totalHoras = horizonteDias * 24
+  const larguraInfo = 230
+  const pixelsHoraBase = horizonteDias <= 1 ? 44 : horizonteDias <= 3 ? 32 : horizonteDias <= 7 ? 22 : horizonteDias <= 14 ? 15 : 10
+  const fatorDensidade = densidade === 'detalhada' ? 1.5 : densidade === 'compacta' ? 0.72 : 1
+  const pixelsPorHora = pixelsHoraBase * fatorDensidade
+  const larguraTimeline = totalHoras * pixelsPorHora
+  const passoHora = horizonteDias <= 3 ? 1 : horizonteDias <= 7 ? 2 : horizonteDias <= 14 ? 4 : 6
+  const horasMarcadas = Array.from({ length: Math.ceil(24 / passoHora) }, (_, indice) => indice * passoHora)
   const termo = busca.trim().toLowerCase()
 
   const operacoesFiltradas = operacoes.filter((op) =>
@@ -116,8 +124,8 @@ export default function GanttCargaMaquina({ recursos, processos, opLotes, onEdit
 
   function renderTrilha(operacoesLinha, vazia = 'Sem OP programada neste horizonte') {
     return (
-      <div className="machine-gantt-track">
-        {dias.map((dia) => <span key={dia.data} className={`${dia.fimSemana ? 'weekend' : ''} ${dia.hoje ? 'today' : ''}`} />)}
+      <div className="machine-gantt-track" style={{ width: `${larguraTimeline}px`, '--hour-width': `${pixelsPorHora}px` }}>
+        {dias.map((dia, indice) => <span key={dia.data} className={`machine-gantt-day-background ${dia.fimSemana ? 'weekend' : ''} ${dia.hoje ? 'today' : ''}`} style={{ left: `${indice * 24 * pixelsPorHora}px`, width: `${24 * pixelsPorHora}px` }} />)}
         {operacoesLinha.filter((op) => op.inicio).map((op) => {
           const situacao = obterSituacaoOperacao(op)
           const originalInicio = new Date(op.inicio).getTime()
@@ -125,9 +133,10 @@ export default function GanttCargaMaquina({ recursos, processos, opLotes, onEdit
           if (originalFim <= inicioMs || originalInicio >= fimMs) return null
           const barraInicio = Math.max(inicioMs, originalInicio)
           const barraFim = Math.min(fimMs, Math.max(barraInicio + 3600000, originalFim))
-          const esquerda = ((barraInicio - inicioMs) / duracao) * 100
-          const largura = ((barraFim - barraInicio) / duracao) * 100
-          return <div key={op.id} className={`machine-gantt-bar ${situacao.classe}`} style={{ left: `${esquerda}%`, width: `${Math.max(largura, 1.2)}%` }} title={`${op.titulo} · ${op.volume.toFixed(2)} m³ · ${situacao.rotulo}`}>{op.titulo}</div>
+          const esquerda = ((barraInicio - inicioMs) / 3600000) * pixelsPorHora
+          const largura = ((barraFim - barraInicio) / 3600000) * pixelsPorHora
+          const horario = new Date(originalInicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+          return <div key={op.id} className={`machine-gantt-bar ${situacao.classe}`} style={{ left: `${esquerda}px`, width: `${Math.max(largura, 18)}px` }} title={`${op.titulo} · ${new Date(originalInicio).toLocaleString('pt-BR')} → ${new Date(originalFim).toLocaleString('pt-BR')} · ${op.volume.toFixed(2)} m³ · ${situacao.rotulo}`}><b>{horario}</b><span>{op.titulo}</span></div>
         })}
         {!operacoesLinha.some((op) => op.inicio) && <em>{vazia}</em>}
       </div>
@@ -151,7 +160,7 @@ export default function GanttCargaMaquina({ recursos, processos, opLotes, onEdit
         <section className="machine-gantt-card">
           <div className="machine-gantt-header">
             <div><span>Planejamento visual</span><h3><CalendarRange size={19} /> Gantt de carga por máquina</h3><small>{inicio.split('-').reverse().join('/')} a {fim.split('-').reverse().join('/')}</small></div>
-            <label className="machine-gantt-zoom">Zoom
+            <div className="machine-gantt-controls"><label className="machine-gantt-zoom">Período
               <select value={horizonteDias} onChange={(e) => setHorizonteDias(Number(e.target.value))}>
                 <option value="1">1 dia</option>
                 <option value="3">3 dias</option>
@@ -159,12 +168,16 @@ export default function GanttCargaMaquina({ recursos, processos, opLotes, onEdit
                 <option value="14">14 dias</option>
                 <option value="30">30 dias</option>
               </select>
-            </label>
+            </label><label className="machine-gantt-zoom">Escala
+              <select value={densidade} onChange={(e) => setDensidade(e.target.value)}>
+                <option value="compacta">Compacta</option><option value="normal">Normal</option><option value="detalhada">Detalhada</option>
+              </select>
+            </label></div>
           </div>
           <div className="machine-gantt-scroll">
-            <div className="machine-gantt-grid">
+            <div className="machine-gantt-grid" style={{ width: `${larguraInfo + larguraTimeline}px` }}>
               <div className="machine-gantt-corner">Máquina / OP / item</div>
-              <div className="machine-gantt-days">{dias.map((dia) => <span key={dia.data} className={`${dia.fimSemana ? 'weekend' : ''} ${dia.hoje ? 'today' : ''}`}>{dia.rotulo}{dia.hoje && <small>Hoje</small>}</span>)}</div>
+              <div className="machine-gantt-days" style={{ width: `${larguraTimeline}px` }}>{dias.map((dia) => <div key={dia.data} className={`machine-gantt-day-header ${dia.fimSemana ? 'weekend' : ''} ${dia.hoje ? 'today' : ''}`} style={{ width: `${24 * pixelsPorHora}px` }}><strong>{new Date(`${dia.data}T00:00:00`).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' })}</strong><div>{horasMarcadas.map((hora) => <span key={hora} style={{ width: `${passoHora * pixelsPorHora}px` }}>{String(hora).padStart(2, '0')}:00</span>)}</div></div>)}</div>
               {recursosFiltrados.map((recurso) => {
                 const capacidade = calcularCapacidadePeriodo(recurso, inicio, fim)
                 const ops = operacoesFiltradas.filter((op) => op.recursoId === recurso.id)
@@ -172,12 +185,12 @@ export default function GanttCargaMaquina({ recursos, processos, opLotes, onEdit
                 const volume = ops.reduce((total, op) => total + op.volume, 0)
                 return (
                   <div className="machine-gantt-resource-group" key={recurso.id}>
-                    <div className="machine-gantt-row">
+                    <div className="machine-gantt-row" style={{ gridTemplateColumns: `${larguraInfo}px ${larguraTimeline}px` }}>
                       <button type="button" className="machine-gantt-resource" onClick={() => alternarRecurso(recurso.id)}>{aberto ? <ChevronDown size={15} /> : <ChevronRight size={15} />}<span><strong>{recurso.nome}</strong><small>{capacidade.configurado ? `${capacidade.capacidade.toFixed(2)} ${capacidade.unidade} · ${volume.toFixed(2)} m³ programados` : 'Capacidade ou calendário não configurado'}</small></span></button>
                       {renderTrilha(ops)}
                     </div>
                     {aberto && ops.map((op) => (
-                      <div className="machine-gantt-row machine-gantt-detail-row" key={op.id}>
+                      <div className="machine-gantt-row machine-gantt-detail-row" key={op.id} style={{ gridTemplateColumns: `${larguraInfo}px ${larguraTimeline}px` }}>
                         <div className="machine-gantt-resource"><span><strong>{op.titulo}</strong><small>{op.projeto} · {op.item}</small><small>{op.quantidade.toFixed(0)} un. · {op.volume.toFixed(2)} m³ · {op.inicio ? new Date(op.inicio).toLocaleString('pt-BR') : 'sem início'} → {op.fim ? new Date(op.fim).toLocaleString('pt-BR') : 'sem término'}</small><span className={`machine-gantt-status ${obterSituacaoOperacao(op).classe}`}>{obterSituacaoOperacao(op).rotulo}</span><button type="button" className="machine-planning-date-button" onClick={() => onEditarPlanejamento?.(op)}>Alterar início e término</button></span></div>
                         {renderTrilha([op], 'Sem data prevista')}
                       </div>

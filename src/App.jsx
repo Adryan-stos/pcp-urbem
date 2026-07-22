@@ -12,6 +12,7 @@ import Producao from './pages/Producao.jsx'
 import Recebimentos from './pages/Recebimentos.jsx'
 import EstoqueMateriais from './pages/EstoqueMateriais.jsx'
 import ConfiguracoesCapacidade from './pages/ConfiguracoesCapacidade.jsx'
+import HistoricoOPs from './pages/HistoricoOPs.jsx'
 
 function App() {
 
@@ -73,6 +74,9 @@ function App() {
 
     case 'configuracoes-capacidade':
       return <ConfiguracoesCapacidade />
+
+    case 'historico-ops':
+      return <HistoricoOPs />
 
     default:
       return <Dashboard />
@@ -195,9 +199,12 @@ function App() {
               Produção
           </button>
 
-          <button className="menu-item">
+          <button
+            className={`menu-item ${paginaAtual === 'historico-ops' ? 'active' : ''}`}
+            onClick={() => setPaginaAtual('historico-ops')}
+          >
             <History size={18} />
-            Histórico GRD
+            Histórico de OPs
           </button>
 
           <button className="menu-item">

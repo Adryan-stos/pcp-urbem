@@ -71,6 +71,7 @@ export async function buscarTalaoExecucao(numeroTalao) {
       produto_entrada,
       quantidade_entrada_prevista,
       produto_saida,
+      blank_saida_id,
       quantidade_saida_prevista,
       status,
       prioridade,
@@ -83,6 +84,15 @@ export async function buscarTalaoExecucao(numeroTalao) {
       finalizado_por,
       tempo_execucao_segundos,
       tempo_parado_segundos,
+      blanks (
+        id,
+        codigo,
+        descricao,
+        classe,
+        espessura_mm,
+        largura_mm,
+        comprimento_mm
+      ),
       ordens_producao (
         id,
         numero_op,

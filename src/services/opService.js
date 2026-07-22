@@ -186,6 +186,72 @@ export async function criarOP(master) {
   return opCriada
 }
 
+export async function criarOPAPartirDaFinger(master, blankSaidaId) {
+  if (!master?.id) throw new Error('Selecione o item/projeto da OP.')
+  if (!blankSaidaId) throw new Error('Selecione o Blank de saída.')
+
+  const numeroOPBase = await gerarNumeroOPBase()
+  const numeroOP = `OP-${numeroOPBase}`
+
+  const { data: opCriada, error: erroOP } = await supabase
+    .from('ordens_producao')
+    .insert([{
+      numero_op: numeroOP,
+      numero_op_base: numeroOPBase,
+      projeto_id: master.projeto_id,
+      carregamento_id: master.carregamento_id,
+      item_id: master.id,
+      item_pai_id: master.id,
+      status: 'Em programação',
+      volume_m3: master.volume_m3 || 0,
+      ativo: true
+    }])
+    .select()
+    .single()
+
+  if (erroOP) throw erroOP
+
+  const processos = montarProcessosOP(master, opCriada.id, numeroOPBase)
+    .filter((processo) => processo.sequencia >= 30)
+    .map((processo, indice) => ({
+      ...processo,
+      status: indice === 0 ? 'Liberado para programação' : 'Pendente',
+      liberado_programacao: indice === 0,
+      blank_saida_id: processo.processo === 'OTIMIZADORA/FINGER' ? blankSaidaId : null
+    }))
+
+  const { error: erroProcessos } = await supabase
+    .from('op_processos')
+    .insert(processos)
+
+  if (erroProcessos) {
+    await supabase.from('ordens_producao').delete().eq('id', opCriada.id)
+    throw erroProcessos
+  }
+
+  return opCriada
+}
+
+export async function listarItensDisponiveisParaOPFinger() {
+  const { data, error } = await supabase
+    .from('itens_projeto')
+    .select(`
+      *,
+      projetos (codigo_interno, nome_projeto, cliente),
+      carregamentos_projeto (numero_carregamento, data_prevista),
+      ordens_producao (id, numero_op, ativo, status)
+    `)
+    .eq('tipo_item', 'PAI')
+    .eq('ativo', true)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+
+  return (data || []).filter((item) =>
+    !(item.ordens_producao || []).some((op) => op.ativo && op.status !== 'Cancelado')
+  )
+}
+
 export async function carregarProcessosOP(opId) {
   const { data, error } = await supabase
     .from('op_processos')

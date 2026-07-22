@@ -6,34 +6,41 @@ export default function CardExecucao({ card, onExecutar }) {
     bloqueado: 'Bloqueado'
   }
 
+  const classeSituacao = {
+    'no-prazo': 'scheduled',
+    atencao: 'upcoming',
+    atrasado: 'late',
+    bloqueado: 'blocked'
+  }[card.criticidade] || 'scheduled'
+
   return (
-    <article className={`exec-card ${card.criticidade}`}>
-      <div className="exec-card-top">
-        <strong>Prioridade {String(card.prioridade).padStart(2, '0')}</strong>
-        <span>{criticidadeLabel[card.criticidade]}</span>
+    <article className={`execucao-lote-card ${classeSituacao}`}>
+      <header>
+        <div>
+          <span className="execucao-lote-prioridade">
+            Prioridade #{String(card.prioridade).padStart(2, '0')}
+          </span>
+          <h4>{card.talao}</h4>
+        </div>
+        <span className={`execucao-lote-status ${classeSituacao}`}>
+          {criticidadeLabel[card.criticidade] || card.status}
+        </span>
+      </header>
+
+      <div className="execucao-lote-resumo">
+        <div><span>Processo</span><strong>{card.setor}</strong></div>
+        <div><span>Sequência</span><strong>{card.processo}</strong></div>
+        <div><span>Transformação</span><strong>{card.transformacao}</strong></div>
+        <div><span>Status</span><strong>{card.status}</strong></div>
       </div>
 
-      <h4>{card.processo}</h4>
-
-      <div className="exec-card-info">
-        <span>Setor</span>
-        <strong>{card.setor}</strong>
+      <div className="execucao-lote-pacotes">
+        {card.master && card.master !== '-' && <span>ITEM {card.master}</span>}
+        {card.projeto && card.projeto !== '-' && <span>PROJETO {card.projeto}</span>}
       </div>
 
-      <div className="exec-card-info">
-        <span>Talão</span>
-        <strong>{card.talao}</strong>
-      </div>
-
-      <div className="exec-card-info">
-        <span>Transformação</span>
-        <strong>{card.transformacao}</strong>
-      </div>
-
-      <div className="exec-card-footer">
-        <span>{card.status}</span>
-
-        <button type="button" onClick={onExecutar}>
+      <div className="execucao-lote-actions">
+        <button type="button" className="btn primary" onClick={onExecutar}>
           Executar
         </button>
       </div>

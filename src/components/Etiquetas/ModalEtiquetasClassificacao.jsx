@@ -10,7 +10,7 @@ function numero(valor, casas = 0) {
   })
 }
 
-export default function ModalEtiquetasClassificacao({ aberto, saidas = [], opLote, onFechar }) {
+export default function ModalEtiquetasClassificacao({ aberto, saidas = [], opLote, onFechar, reimpressao = false }) {
   const [indice, setIndice] = useState(0)
   const [qrCode, setQrCode] = useState('')
   const saida = saidas[indice]
@@ -32,6 +32,10 @@ export default function ModalEtiquetasClassificacao({ aberto, saidas = [], opLot
   if (!aberto || !saida) return null
 
   const codigo = pacote.codigo_pacote || pacote.codigo_item || saida.pacote_saida_id
+  const pacoteOrigem = (opLote?.op_lote_itens || [])
+    .find((item) => item.estoque_item_id === saida.pacote_origem_id)
+    ?.pacotes_materia_prima
+  const codigoOrigem = pacoteOrigem?.codigo_pacote || pacoteOrigem?.codigo_item || saida.pacote_origem_id
 
   return createPortal(
     <div className="etiqueta-modal-overlay" role="dialog" aria-modal="true">
@@ -55,6 +59,8 @@ export default function ModalEtiquetasClassificacao({ aberto, saidas = [], opLot
                 <span>SAÍDA DA CLASSIFICADORA</span>
               </div>
             </header>
+
+            {reimpressao && <div className="etiqueta-reimpressao">REIMPRESSÃO</div>}
 
             <div className="etiqueta-conteudo">
               <div className="etiqueta-dados">
@@ -89,7 +95,7 @@ export default function ModalEtiquetasClassificacao({ aberto, saidas = [], opLot
                 <div className="etiqueta-linha etiqueta-secundaria">
                   <div className="etiqueta-campo">
                     <span>PACOTE DE ORIGEM</span>
-                    <strong>{saida.pacote_origem_id}</strong>
+                    <strong>{codigoOrigem}</strong>
                   </div>
                   <div className="etiqueta-campo">
                     <span>DESTINO</span>
