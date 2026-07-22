@@ -4,6 +4,36 @@ import { listarItensDisponiveisParaOPFinger } from '../../services/opService.js'
 
 const NOVO_BLANK_INICIAL = { classe: '', espessuraMm: '', larguraMm: '', comprimentoMm: '' }
 
+function numeroDimensao(valor) {
+  const numero = Number(String(valor ?? '').replace(',', '.'))
+  return Number.isFinite(numero) && numero > 0 ? numero : 0
+}
+
+function avaliarCompatibilidade(blank, item) {
+  const base = numeroDimensao(item?.base_mm)
+  const altura = numeroDimensao(item?.altura_mm)
+  const comprimentoItem = numeroDimensao(item?.comprimento_mm)
+  const espessura = numeroDimensao(blank?.espessura_mm)
+  const largura = numeroDimensao(blank?.largura_mm)
+  const comprimentoBlank = numeroDimensao(blank?.comprimento_mm)
+
+  if (!base || !altura) {
+    return { compativel: false, motivo: 'Item sem base ou altura cadastrada', comprimentoExato: false }
+  }
+
+  const cabeNaSecao = (espessura <= base && largura <= altura) || (espessura <= altura && largura <= base)
+  if (!cabeNaSecao) {
+    return { compativel: false, motivo: 'Seção maior que a base/altura do item', comprimentoExato: false }
+  }
+
+  const comprimentoExato = Boolean(comprimentoItem && comprimentoBlank === comprimentoItem)
+  return {
+    compativel: true,
+    comprimentoExato,
+    motivo: comprimentoExato ? 'Compatível, inclusive no comprimento' : 'Seção compatível · confira o comprimento'
+  }
+}
+
 export default function ModalOPFinger({ aberto, onCancelar, onSalvar, carregando }) {
   const [itens, setItens] = useState([])
   const [blanks, setBlanks] = useState([])
@@ -93,10 +123,39 @@ export default function ModalOPFinger({ aberto, onCancelar, onSalvar, carregando
     [blanks, blankId]
   )
 
+  const itemSelecionado = useMemo(
+    () => itens.find((item) => item.id === itemId),
+    [itens, itemId]
+  )
+
+  const blanksAvaliados = useMemo(() => {
+    if (!itemSelecionado) return { compativeis: [], outros: blanksFiltrados }
+    const avaliados = blanksFiltrados.map((blank) => ({
+      blank,
+      avaliacao: avaliarCompatibilidade(blank, itemSelecionado)
+    }))
+    return {
+      compativeis: avaliados
+        .filter(({ avaliacao }) => avaliacao.compativel)
+        .sort((a, b) => Number(b.avaliacao.comprimentoExato) - Number(a.avaliacao.comprimentoExato)),
+      outros: avaliados.filter(({ avaliacao }) => !avaliacao.compativel)
+    }
+  }, [blanksFiltrados, itemSelecionado])
+
   function selecionarProjeto(id) {
     setProjetoId(id)
     setItemId('')
     setBuscaItem('')
+  }
+
+  function iniciarNovoBlank() {
+    setCriandoBlank(true)
+    setNovoBlank({
+      classe: '',
+      espessuraMm: itemSelecionado?.base_mm || '',
+      larguraMm: itemSelecionado?.altura_mm || '',
+      comprimentoMm: itemSelecionado?.comprimento_mm || ''
+    })
   }
 
   async function salvarNovoBlank() {
@@ -172,7 +231,7 @@ export default function ModalOPFinger({ aberto, onCancelar, onSalvar, carregando
             <section className="recebimento-section">
               <div className="op-modal-header">
                 <div><h4>Produto de saída</h4><small>O comprimento faz parte da identificação do Blank.</small></div>
-                <button type="button" className="btn ghost" onClick={() => setCriandoBlank((valor) => !valor)}>
+                <button type="button" className="btn ghost" onClick={() => criandoBlank ? setCriandoBlank(false) : iniciarNovoBlank()}>
                   {criandoBlank ? 'Cancelar novo Blank' : '+ Criar novo Blank'}
                 </button>
               </div>
@@ -187,6 +246,12 @@ export default function ModalOPFinger({ aberto, onCancelar, onSalvar, carregando
                 </div>
               ) : (
                 <div className="op-finger-blank-picker">
+                  {itemSelecionado && (
+                    <div className="op-finger-item-dimensions">
+                      <span>Dimensões do item selecionado</span>
+                      <strong>{itemSelecionado.base_mm || '-'} × {itemSelecionado.altura_mm || '-'} × {itemSelecionado.comprimento_mm || '-'} mm</strong>
+                    </div>
+                  )}
                   <label className="op-finger-field">
                     <span>Pesquisar e selecionar Blank</span>
                     <input value={busca} onChange={(event) => setBusca(event.target.value)} placeholder="Digite o código, a classe ou as dimensões" />
@@ -199,17 +264,49 @@ export default function ModalOPFinger({ aberto, onCancelar, onSalvar, carregando
                     </div>
                   )}
 
-                  {!blankSelecionado && (
-                    <div className="op-finger-blank-results" role="listbox" aria-label="Blanks encontrados">
-                      {blanksFiltrados.slice(0, 10).map((blank) => (
-                        <button key={blank.id} type="button" className="op-finger-blank-option" onClick={() => setBlankId(blank.id)}>
-                          <strong>{blank.codigo}</strong>
-                          <span>{formatarBlank(blank)}</span>
-                        </button>
-                      ))}
-                      {!blanksFiltrados.length && <p>Nenhum Blank encontrado. Você pode criar um novo padrão.</p>}
-                      {blanksFiltrados.length > 10 && <small>Refine a pesquisa para visualizar os demais resultados.</small>}
-                    </div>
+                  {!blankSelecionado && !itemSelecionado && (
+                    <p className="op-finger-guidance">Selecione primeiro o item Master para receber sugestões de Blanks.</p>
+                  )}
+
+                  {!blankSelecionado && itemSelecionado && (
+                    <>
+                      <div className="op-finger-results-header">
+                        <strong>Blanks compatíveis</strong>
+                        <span>{blanksAvaliados.compativeis.length} opção(ões)</span>
+                      </div>
+                      {blanksAvaliados.compativeis.length ? (
+                        <div className="op-finger-blank-results" role="listbox" aria-label="Blanks compatíveis">
+                          {blanksAvaliados.compativeis.slice(0, 10).map(({ blank, avaliacao }) => (
+                            <button key={blank.id} type="button" className="op-finger-blank-option compatible" onClick={() => setBlankId(blank.id)}>
+                              <strong>{blank.codigo}</strong>
+                              <span>{formatarBlank(blank)}</span>
+                              <small>{avaliacao.motivo}</small>
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="op-finger-empty-compatible">
+                          <strong>Nenhum Blank cadastrado é compatível com este item.</strong>
+                          <span>Confira as dimensões ou cadastre um novo Blank.</span>
+                          <button type="button" className="btn ghost" onClick={iniciarNovoBlank}>+ Criar novo Blank</button>
+                        </div>
+                      )}
+
+                      {busca.trim() && blanksAvaliados.outros.length > 0 && (
+                        <>
+                          <div className="op-finger-results-header secondary"><strong>Outros cadastrados</strong><span>Seleção com alerta</span></div>
+                          <div className="op-finger-blank-results" role="listbox" aria-label="Outros Blanks cadastrados">
+                            {blanksAvaliados.outros.slice(0, 6).map(({ blank, avaliacao }) => (
+                              <button key={blank.id} type="button" className="op-finger-blank-option incompatible" onClick={() => setBlankId(blank.id)}>
+                                <strong>{blank.codigo}</strong>
+                                <span>{formatarBlank(blank)}</span>
+                                <small>{avaliacao.motivo}</small>
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </>
                   )}
                 </div>
               )}
