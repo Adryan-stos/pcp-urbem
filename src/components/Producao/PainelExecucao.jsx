@@ -174,7 +174,15 @@ export default function PainelExecucao({ talao, somenteConsulta = false, onNovaB
   }
 
   function abrirFinalizacao() {
-    if (!ehLote) setModalFinalizacaoAberto(true)
+    if (!ehLote) {
+      setDadosFinalizacao((dadosAtuais) => ({
+        ...dadosAtuais,
+        blankSaidaId: processoAtual.processo === 'OTIMIZADORA/FINGER'
+          ? (processoAtual.blank_saida_id || dadosAtuais.blankSaidaId || '')
+          : dadosAtuais.blankSaidaId
+      }))
+      setModalFinalizacaoAberto(true)
+    }
     else if (processoAtual.processo === 'CLASSIFICADORA') setModalClassificacaoAberto(true)
     else setModalEtapaAberto(true)
   }
@@ -207,6 +215,13 @@ export default function PainelExecucao({ talao, somenteConsulta = false, onNovaB
         <div><span>Processo</span><strong>{processoAtual.sequencia} - {processoAtual.processo}</strong></div>
         <div><span>Recurso</span><strong>{processoAtual.recurso || '-'}</strong></div>
         <div><span>Transformação</span><strong>{processoAtual.produto_entrada || '-'} → {processoAtual.produto_saida || '-'}</strong></div>
+        {processoAtual.processo === 'OTIMIZADORA/FINGER' && (
+          <div>
+            <span>Blank planejado</span>
+            <strong>{processoAtual.blanks?.codigo || processoAtual.produto_saida || '-'}</strong>
+            {processoAtual.blanks && <small>{`${processoAtual.blanks.classe} - ${Number(processoAtual.blanks.espessura_mm)} × ${Number(processoAtual.blanks.largura_mm)} × ${Number(processoAtual.blanks.comprimento_mm)} mm`}</small>}
+          </div>
+        )}
       </div>
 
       {processoAtual.status !== 'Concluído' && !somenteConsulta && (
@@ -221,7 +236,7 @@ export default function PainelExecucao({ talao, somenteConsulta = false, onNovaB
       )}
 
       <ModalParada aberto={modalParadaAberto} motivos={motivos} motivoSelecionado={motivoSelecionado} setMotivoSelecionado={setMotivoSelecionado} observacao={observacaoParada} setObservacao={setObservacaoParada} onConfirmar={confirmarParada} onCancelar={() => setModalParadaAberto(false)} carregando={carregandoParada} />
-      <ModalFinalizacao aberto={modalFinalizacaoAberto} dados={dadosFinalizacao} setDados={setDadosFinalizacao} onConfirmar={confirmarFinalizacaoProcesso} onCancelar={() => setModalFinalizacaoAberto(false)} carregando={carregandoFinalizacao} processo={processoAtual.processo} />
+      <ModalFinalizacao aberto={modalFinalizacaoAberto} dados={dadosFinalizacao} setDados={setDadosFinalizacao} onConfirmar={confirmarFinalizacaoProcesso} onCancelar={() => setModalFinalizacaoAberto(false)} carregando={carregandoFinalizacao} processo={processoAtual.processo} blankPlanejado={processoAtual.blanks} />
       <ModalFinalizacaoEtapaLote aberto={modalEtapaAberto} opLote={processoAtual} carregando={carregandoFinalizacao} onCancelar={() => setModalEtapaAberto(false)} onConfirmar={confirmarFinalizacaoEtapa} />
       <ModalClassificacaoLote aberto={modalClassificacaoAberto} opLote={processoAtual} carregando={carregandoFinalizacao} onCancelar={() => setModalClassificacaoAberto(false)} onConfirmar={confirmarClassificacao} />
       <ModalEtiquetasClassificacao aberto={Boolean(resultadoClassificacao?.saidas?.length)} saidas={resultadoClassificacao?.saidas || []} opLote={processoAtual} onFechar={() => setResultadoClassificacao(null)} />
