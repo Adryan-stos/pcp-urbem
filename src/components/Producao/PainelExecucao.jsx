@@ -40,7 +40,7 @@ export default function PainelExecucao({ talao, somenteConsulta = false, onNovaB
   const [modalEtapaAberto, setModalEtapaAberto] = useState(false)
   const [resultadoClassificacao, setResultadoClassificacao] = useState(null)
   const [carregandoFinalizacao, setCarregandoFinalizacao] = useState(false)
-  const [dadosFinalizacao, setDadosFinalizacao] = useState({ quantidadeEntrada: '', quantidadeSaida: '', quantidadePerda: '', observacao: '' })
+  const [dadosFinalizacao, setDadosFinalizacao] = useState({ quantidadeEntrada: '', quantidadeSaida: '', quantidadePerda: '', observacao: '', blankSaidaId: '', novoBlank: { classe: '', espessuraMm: '', larguraMm: '', comprimentoMm: '' } })
   const tipoOperacao = processoAtual._tipo_operacao || 'processo'
   const ehLote = tipoOperacao === 'lote'
 
@@ -89,7 +89,8 @@ export default function PainelExecucao({ talao, somenteConsulta = false, onNovaB
         quantidadeEntrada: dadosFinalizacao.quantidadeEntrada ? Number(dadosFinalizacao.quantidadeEntrada) : null,
         quantidadeSaida: dadosFinalizacao.quantidadeSaida ? Number(dadosFinalizacao.quantidadeSaida) : null,
         quantidadePerda: dadosFinalizacao.quantidadePerda ? Number(dadosFinalizacao.quantidadePerda) : 0,
-        observacao: dadosFinalizacao.observacao
+        observacao: dadosFinalizacao.observacao,
+        blankSaidaId: dadosFinalizacao.blankSaidaId || null
       })
       setProcessoAtual((atual) => ({ ...atual, ...processoAtualizado }))
       setModalFinalizacaoAberto(false)
@@ -220,7 +221,7 @@ export default function PainelExecucao({ talao, somenteConsulta = false, onNovaB
       )}
 
       <ModalParada aberto={modalParadaAberto} motivos={motivos} motivoSelecionado={motivoSelecionado} setMotivoSelecionado={setMotivoSelecionado} observacao={observacaoParada} setObservacao={setObservacaoParada} onConfirmar={confirmarParada} onCancelar={() => setModalParadaAberto(false)} carregando={carregandoParada} />
-      <ModalFinalizacao aberto={modalFinalizacaoAberto} dados={dadosFinalizacao} setDados={setDadosFinalizacao} onConfirmar={confirmarFinalizacaoProcesso} onCancelar={() => setModalFinalizacaoAberto(false)} carregando={carregandoFinalizacao} />
+      <ModalFinalizacao aberto={modalFinalizacaoAberto} dados={dadosFinalizacao} setDados={setDadosFinalizacao} onConfirmar={confirmarFinalizacaoProcesso} onCancelar={() => setModalFinalizacaoAberto(false)} carregando={carregandoFinalizacao} processo={processoAtual.processo} />
       <ModalFinalizacaoEtapaLote aberto={modalEtapaAberto} opLote={processoAtual} carregando={carregandoFinalizacao} onCancelar={() => setModalEtapaAberto(false)} onConfirmar={confirmarFinalizacaoEtapa} />
       <ModalClassificacaoLote aberto={modalClassificacaoAberto} opLote={processoAtual} carregando={carregandoFinalizacao} onCancelar={() => setModalClassificacaoAberto(false)} onConfirmar={confirmarClassificacao} />
       <ModalEtiquetasClassificacao aberto={Boolean(resultadoClassificacao?.saidas?.length)} saidas={resultadoClassificacao?.saidas || []} opLote={processoAtual} onFechar={() => setResultadoClassificacao(null)} />
