@@ -3,6 +3,7 @@ import { Printer } from 'lucide-react'
 import { VALIDACOES_PROCESSO } from '../../config/validacoesProcesso.js'
 import { listarEtiquetasClassificacao } from '../../services/execucaoOpLoteService.js'
 import ModalEtiquetasClassificacao from '../Etiquetas/ModalEtiquetasClassificacao.jsx'
+import ModalEtiquetaOperacao from '../Etiquetas/ModalEtiquetaOperacao.jsx'
 
 export default function ValidacaoInicial({
   talao,
@@ -19,17 +20,24 @@ export default function ValidacaoInicial({
   const [etiquetas, setEtiquetas] = useState([])
   const [carregandoEtiquetas, setCarregandoEtiquetas] = useState(false)
   const [erroEtiquetas, setErroEtiquetas] = useState('')
+  const [etiquetaOperacaoAberta, setEtiquetaOperacaoAberta] = useState(false)
   const regra = VALIDACOES_PROCESSO[talao.processo] || { exigeQuantidade: false, exigeDimensao: true, loteEntrada: 'Talão Anterior' }
   const ehLote = talao._tipo_operacao === 'lote'
-  const permiteReimpressao = ehLote && talao.processo === 'CLASSIFICADORA' && talao.status === 'Concluído'
+  const operacaoConcluida = ['Concluído', 'Finalizado', 'Validado'].includes(talao.status)
+  const possuiEtiquetasClassificacao = ehLote && talao.processo === 'CLASSIFICADORA'
+  const permiteReimpressao = operacaoConcluida
 
   async function abrirReimpressao() {
     try {
       setCarregandoEtiquetas(true)
       setErroEtiquetas('')
-      const dados = await listarEtiquetasClassificacao(talao.id)
-      if (!dados.length) throw new Error('Nenhuma etiqueta foi encontrada para esta OP.')
-      setEtiquetas(dados)
+      if (possuiEtiquetasClassificacao) {
+        const dados = await listarEtiquetasClassificacao(talao.id)
+        if (!dados.length) throw new Error('Nenhuma etiqueta foi encontrada para esta OP.')
+        setEtiquetas(dados)
+      } else {
+        setEtiquetaOperacaoAberta(true)
+      }
     } catch (error) {
       setErroEtiquetas(error.message)
     } finally {
@@ -83,8 +91,8 @@ export default function ValidacaoInicial({
       {permiteReimpressao && (
         <div className="execucao-reimpressao-card">
           <div>
-            <strong>Etiquetas geradas pela classificação</strong>
-            <span>Consulte e imprima novamente os pacotes desta OP sem movimentar o estoque.</span>
+            <strong>{possuiEtiquetasClassificacao ? 'Etiquetas geradas pela classificação' : 'Etiqueta da operação concluída'}</strong>
+            <span>Imprima uma segunda via identificada como reimpressão, sem alterar estoque ou apontamentos.</span>
           </div>
           <button type="button" className="btn primary" onClick={abrirReimpressao} disabled={carregandoEtiquetas}>
             <Printer size={17} /> {carregandoEtiquetas ? 'Carregando...' : 'Reimprimir etiquetas'}
@@ -178,6 +186,12 @@ export default function ValidacaoInicial({
         opLote={talao}
         reimpressao
         onFechar={() => setEtiquetas([])}
+      />
+
+      <ModalEtiquetaOperacao
+        aberto={etiquetaOperacaoAberta}
+        operacao={talao}
+        onFechar={() => setEtiquetaOperacaoAberta(false)}
       />
 
       <button
