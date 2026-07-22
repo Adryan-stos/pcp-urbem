@@ -1,18 +1,21 @@
 import { useEffect, useMemo, useState } from 'react'
 import { cadastrarBlank, formatarBlank, listarBlanks } from '../../../services/blanksService.js'
 
-export default function ModalFinalizacao({ aberto, dados, setDados, onConfirmar, onCancelar, carregando, processo }) 
+export default function ModalFinalizacao({ aberto, dados, setDados, onConfirmar, onCancelar, carregando, processo, blankPlanejado }) 
 
 {
   const [blanks, setBlanks] = useState([])
   const [criandoBlank, setCriandoBlank] = useState(false)
   const [carregandoBlanks, setCarregandoBlanks] = useState(false)
   const [erroBlank, setErroBlank] = useState('')
+  const [alterandoBlank, setAlterandoBlank] = useState(false)
   const ehOtimizadora = processo === 'OTIMIZADORA/FINGER'
   const novoBlank = dados.novoBlank || { classe: '', espessuraMm: '', larguraMm: '', comprimentoMm: '' }
 
   useEffect(() => {
     if (!aberto || !ehOtimizadora) return
+    setAlterandoBlank(false)
+    setCriandoBlank(false)
     async function carregar() {
       try {
         setCarregandoBlanks(true)
@@ -80,14 +83,27 @@ export default function ModalFinalizacao({ aberto, dados, setDados, onConfirmar,
               {erroBlank && <div className="alert">{erroBlank}</div>}
 
               {!criandoBlank ? (
-                <label>
-                  Padrão de saída
-                  <select value={dados.blankSaidaId || ''} onChange={(e) => setDados({ ...dados, blankSaidaId: e.target.value })} disabled={carregandoBlanks}>
-                    <option value="">{carregandoBlanks ? 'Carregando Blanks...' : 'Selecione o Blank produzido'}</option>
-                    {blanks.map((blank) => <option key={blank.id} value={blank.id}>{blank.codigo} · {formatarBlank(blank)}</option>)}
-                  </select>
-                  {blankSelecionado && <small>{blankSelecionado.descricao}</small>}
-                </label>
+                <>
+                  {blankSelecionado && !alterandoBlank ? (
+                    <div className="op-finger-blank-selected">
+                      <div>
+                        <small>{blankPlanejado?.id === blankSelecionado.id ? 'Blank planejado na criação da OP' : 'Blank selecionado para a produção'}</small>
+                        <strong>{blankSelecionado.codigo} · {formatarBlank(blankSelecionado)}</strong>
+                        <span>Confirme se este foi o padrão efetivamente produzido.</span>
+                      </div>
+                      <button type="button" className="btn ghost" onClick={() => setAlterandoBlank(true)}>Alterar</button>
+                    </div>
+                  ) : (
+                    <label>
+                      Padrão efetivamente produzido
+                      <select value={dados.blankSaidaId || ''} onChange={(e) => { setDados({ ...dados, blankSaidaId: e.target.value }); setAlterandoBlank(false) }} disabled={carregandoBlanks}>
+                        <option value="">{carregandoBlanks ? 'Carregando Blanks...' : 'Selecione o Blank produzido'}</option>
+                        {blanks.map((blank) => <option key={blank.id} value={blank.id}>{blank.codigo} · {formatarBlank(blank)}</option>)}
+                      </select>
+                      <small>Altere somente se a produção real for diferente do planejamento.</small>
+                    </label>
+                  )}
+                </>
               ) : (
                 <div className="blank-dimensoes-grid">
                   <label>Classe<input value={novoBlank.classe} onChange={(e) => alterarNovoBlank('classe', e.target.value.toUpperCase())} placeholder="Ex.: C24" /></label>
