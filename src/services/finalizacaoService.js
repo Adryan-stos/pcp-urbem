@@ -4,6 +4,17 @@ import { liberarProximoProcesso, atualizarStatusOrdemProducao } from './workflow
 const USUARIO_DESENVOLVIMENTO = 'DESENVOLVIMENTO'
 
 export async function finalizarProducao(opProcesso, dados = {}) {
+  if (opProcesso.processo === 'OTIMIZADORA/FINGER' && !dados.blankSaidaId) {
+    throw new Error('Selecione ou cadastre o Blank produzido antes de finalizar.')
+  }
+
+  let blankSaida = null
+  if (dados.blankSaidaId) {
+    const { data, error } = await supabase.from('blanks').select('*').eq('id', dados.blankSaidaId).eq('ativo', true).single()
+    if (error) throw error
+    blankSaida = data
+  }
+
   const fim = new Date()
   const fimISO = fim.toISOString()
 
@@ -37,9 +48,9 @@ export async function finalizarProducao(opProcesso, dados = {}) {
   }
 
     // Dimensões medidas no início da produção
-    const espessura = Number(opProcesso.espessura_inicio || 0)
-    const largura = Number(opProcesso.largura_inicio || 0)
-    const comprimento = Number(opProcesso.comprimento_inicio || 0)
+    const espessura = Number(blankSaida?.espessura_mm || opProcesso.espessura_inicio || 0)
+    const largura = Number(blankSaida?.largura_mm || opProcesso.largura_inicio || 0)
+    const comprimento = Number(blankSaida?.comprimento_mm || opProcesso.comprimento_inicio || 0)
 
     const quantidadeSaida = Number(dados.quantidadeSaida || 0)
 
@@ -55,7 +66,8 @@ export async function finalizarProducao(opProcesso, dados = {}) {
         op_processo_id: opProcesso.id,
         produto_entrada: opProcesso.produto_entrada,
         quantidade_entrada: dados.quantidadeEntrada ?? null,
-        produto_saida: opProcesso.produto_saida,
+        produto_saida: blankSaida?.descricao || opProcesso.produto_saida,
+        blank_saida_id: blankSaida?.id || null,
         quantidade_saida: quantidadeSaida,
         quantidade_perda: dados.quantidadePerda ?? 0,
         observacao: dados.observacao ?? null,
@@ -77,7 +89,9 @@ export async function finalizarProducao(opProcesso, dados = {}) {
       status: 'Concluído',
       status_pcp: 'Concluído',
       fim_producao: fimISO,
-      finalizado_por: null
+      finalizado_por: null,
+      blank_saida_id: blankSaida?.id || null,
+      produto_saida: blankSaida?.descricao || opProcesso.produto_saida
     })
     .eq('id', opProcesso.id)
     .select(`
