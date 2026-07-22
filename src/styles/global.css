@@ -3292,6 +3292,49 @@ td {
   resize: vertical;
 }
 
+.blank-finalizacao {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  background: #f8faf9;
+}
+
+.blank-finalizacao-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.blank-finalizacao-header div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.blank-finalizacao-header span,
+.blank-finalizacao small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.blank-dimensoes-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.blank-dimensoes-grid .btn {
+  grid-column: 1 / -1;
+  justify-self: end;
+}
+
+@media (max-width: 680px) {
+  .blank-finalizacao-header { align-items: flex-start; flex-direction: column; }
+  .blank-dimensoes-grid { grid-template-columns: 1fr; }
+}
+
 /* ==================================================
    APONTAMENTO - MASTER 360
 ================================================== */
